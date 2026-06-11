@@ -24,6 +24,21 @@ const CONFIG = {
     target:  130,  /* Das Projektziel */
   },
 
+  /* Mitte-Videos: Britney-Avatar.
+   * Stand-Loop  britney_N  läuft endlos. Bei Bewegung spielt  transition_N
+   * einmal und blendet zu  britney_(N+1). Nach der letzten Stufe geht es
+   * zurück auf britney_1. Eine Stufe wird ausgelöst durch PIR-Sensor,
+   * Leertaste (lokaler Test) oder britney.advance() in der Konsole. */
+  video: {
+    dir: './vidoes',     /* Ordner mit britney_1..N.mp4 und transition_1..N.mp4 */
+    stages: 4,           /* Anzahl Stand-Loops (britney_1 … britney_4) */
+    startStage: 1,       /* womit gestartet wird */
+    muted: true,         /* Kiosk läuft lautlos (muted erlaubt den Autostart) */
+    crossfadeMs: 130,    /* kurze Überblendung — verdeckt den Stale-Frame beim Wechsel.
+                            0 = harter Schnitt (blitzt evtl. 1 Frame), höher = weicher */
+    cooldownMs: 1000,    /* entprellt schnelle PIR-Doppelpulse */
+  },
+
   /* Mittel-Visualisierung: Forschungskooperation VGT × FHNW.
    * Texte hier zentral änderbar. Der von »…« umschlossene Teil wird fett
    * gesetzt — die Anführungszeichen selbst werden NICHT angezeigt. */

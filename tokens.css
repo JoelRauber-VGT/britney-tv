@@ -23,7 +23,7 @@
 
 :root {
   /* ── Farbe · dunkles Violett-Papier, Signal-Orange als einziger Akzent ── */
-  --color-paper:    oklch(13% 0.018 305);
+  --color-paper:    oklch(0% 0 0);   /* reines Schwarz */
   --color-paper-2:  oklch(17% 0.020 305);
   --color-paper-3:  oklch(22% 0.022 305);
   --color-ink:      oklch(93% 0.010 305);
