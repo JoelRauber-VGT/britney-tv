@@ -350,16 +350,38 @@ window.britney.reset   = async () => {                        /* zurück auf bri
    ohne serve.py) werden still verschluckt — die Leertaste funktioniert weiter. */
 if (cfg.motion && cfg.motion.url) {
   let lastSeen = null;
+  let dbgCount = -1;          /* zuletzt vom Server gelesener Zaehler (nur Debug) */
   const pollMotion = async () => {
     try {
       const res = await fetch(cfg.motion.url, { cache: 'no-store' });
       const { count } = await res.json();
+      dbgCount = count;
       if (lastSeen === null) lastSeen = count;       /* beim Start nur synchronisieren */
       else if (count > lastSeen) { lastSeen = count; triggerMotion(); }
       else if (count < lastSeen) lastSeen = count;   /* Server neu gestartet (Zaehler bei 0) → resyncen, nicht blockieren */
     } catch { /* Endpunkt nicht erreichbar → ignorieren */ }
   };
   setInterval(pollMotion, cfg.motion.pollMs || 300);
+
+  /* ── TEMPORÄRES DEBUG-OVERLAY (oben links) ──────────────────────────
+     Zeigt live, ob die Bewegung im Frontend ankommt und warum ein Übergang
+     evtl. blockiert. Mit cfg.debug = false (config.js) wieder ausschalten. */
+  if (cfg.debug !== false) {
+    const dbg = document.createElement('div');
+    dbg.style.cssText = 'position:fixed;top:8px;left:8px;z-index:99999;' +
+      'font:14px/1.4 monospace;color:#0f0;background:rgba(0,0,0,.8);' +
+      'padding:8px 10px;white-space:pre;pointer-events:none;border-radius:6px';
+    document.body.appendChild(dbg);
+    setInterval(() => {
+      dbg.textContent =
+        `server count : ${dbgCount}\n` +
+        `lastSeen     : ${lastSeen}\n` +
+        `stage        : ${stage}\n` +
+        `busy         : ${busy}\n` +
+        `cooldown(ms) : ${Math.max(0, cooldownUntil - Date.now())}\n` +
+        `hasVideo     : ${hasVideo}`;
+    }, 150);
+  }
 }
 
 /* ════════════════════════════════════════════════════════════════
