@@ -201,9 +201,11 @@ function firstFrame(el) {
 /* Wartet n Animations-Frames (Compositor-Takte). */
 function nextFrames(n) {
   return new Promise((resolve) => {
-    let i = 0;
-    const step = () => { if (++i >= n) resolve(); else requestAnimationFrame(step); };
+    let i = 0, done = false;
+    const fin = () => { if (!done) { done = true; resolve(); } };
+    const step = () => { if (done) return; if (++i >= n) fin(); else requestAnimationFrame(step); };
     requestAnimationFrame(step);
+    setTimeout(fin, 500);   /* Notbremse, falls rAF (z. B. versteckter Tab) nicht feuert */
   });
 }
 
@@ -222,7 +224,11 @@ async function reveal(loop) {
   b.onended = null;
   await whenReady(b);
   try { b.currentTime = 0; } catch (_) {}
-  try { await b.play(); } catch (_) {}   /* Autoplay-Reject schluckt sich harmlos */
+  /* play() kann auf dem Pi haengen (Promise settlet nie) -> nie ewig warten.
+     Reject (Autoplay-Block) wird separat geschluckt. */
+  const pp = b.play();
+  if (pp && pp.catch) pp.catch(() => {});
+  await Promise.race([Promise.resolve(pp), new Promise((r) => setTimeout(r, 1500))]);
   await firstFrame(b);                    /* erster Frame ist dekodiert */
 
   /* 1) Neue Ebene voll sichtbar, aber HINTER die alte → komponiert Live-Frame,
@@ -286,6 +292,9 @@ function waitForEnd(el) {
 async function advance() {
   if (!hasVideo || busy) return;
   busy = true;
+  /* Watchdog: egal was im Übergang schiefläuft – busy darf NIE dauerhaft
+     hängen bleiben, sonst ignoriert triggerMotion ab da jede Bewegung. */
+  const watchdog = setTimeout(() => { busy = false; }, 20000);
   try {
     preload(back(), clip(`transition_${stage}`));   /* i. d. R. schon vorbereitet */
     const t = await reveal(false);                  /* Übergang einmal abspielen */
@@ -298,6 +307,7 @@ async function advance() {
     await reveal(true);                             /* nächster Stand-Loop */
     preload(back(), clip(`transition_${stage}`));   /* schon den Folge-Übergang vorbereiten */
   } finally {
+    clearTimeout(watchdog);
     busy = false;
     cooldownUntil = Date.now() + (V.cooldownMs || 0);
   }
