@@ -109,25 +109,27 @@ Internet nötig.
 
 # 2. Bildschirm auf Hochformat drehen (Einstellungen → Screen Configuration)
 
-# 3. xdotool installieren (für den PIR-Sensor-Trigger):
+# 3. xdotool installieren (PFLICHT für den PIR-Sensor-Trigger):
 sudo apt install xdotool
 
-# 4. Autostart einrichten — Server, dann Chromium, dann Sensor-Trigger:
+# 4. Autostart einrichten — ruft das Start-Skript auf (Server → Chromium → Sensor).
+#    Pfad an euren Repo-Ort anpassen (hier: /home/britney-tv/britney-tv).
 mkdir -p ~/.config/autostart
 cat > ~/.config/autostart/britney.desktop <<'DESKTOP'
 [Desktop Entry]
 Type=Application
 Name=Britney Dashboard
-Exec=sh -c "cd /home/pi/britney-dashboard && python3 serve.py & sleep 2 && chromium-browser --kiosk --noerrdialogs --disable-restore-session-state http://localhost:8000/ & sleep 5 && python3 sensor/bs412_motion.py"
+Exec=/home/britney-tv/britney-tv/start-kiosk.sh
 DESKTOP
 
 # 5. Bildschirm-Blanking ausschalten:
 sudo raspi-config   # → Display Options → Screen Blanking → Off
 ```
 
-Der Sensor läuft hier im selben X-Desktop wie Chromium, daher findet
-`xdotool` das Kiosk-Fenster automatisch (kein `DISPLAY` nötig). Pfad
-`/home/pi/britney-dashboard` an euren Repo-Pfad anpassen.
+`start-kiosk.sh` startet Webserver, Chromium-Kiosk und den Sensor in der
+richtigen Reihenfolge und schreibt Logs nach `/tmp/britney-serve.log`,
+`/tmp/britney-chromium.log`, `/tmp/britney-sensor.log` — bei Problemen
+zuerst dort nachsehen.
 
 Täglicher Auto-Reload um 4 Uhr (`kiosk.dailyReloadHour`) gegen Memory-Drift im
 Dauerbetrieb.

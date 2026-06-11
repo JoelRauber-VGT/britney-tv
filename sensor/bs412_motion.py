@@ -39,7 +39,10 @@ DISPLAY = ":0"      # X-Display des Kiosk-Browsers
 def advance_kiosk():
     """Eine Stufe im Dashboard weiterschalten (Leertaste an den Browser)."""
     env = dict(os.environ, DISPLAY=DISPLAY)
-    subprocess.run(["xdotool", "key", "space"], env=env, check=False)
+    try:
+        subprocess.run(["xdotool", "key", "space"], env=env, check=False)
+    except FileNotFoundError:
+        print("FEHLER: 'xdotool' nicht gefunden -> sudo apt install xdotool", flush=True)
 
 
 def main():
