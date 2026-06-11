@@ -120,6 +120,55 @@ body {
 }
 .stage__caption strong { color: var(--color-ink); font-weight: 600; }
 
+/* ── Bewegungs-Overlay (PIR-Trigger / Video-Platzhalter) ──
+   Sitzt im freien Raum über den Logos — dort kommen später die Videos hin.
+   Standardmäßig unsichtbar, blendet bei .is-active sanft ein. */
+.motion {
+  position: fixed;
+  left: 50%;
+  top: 42%;
+  z-index: var(--z-raised);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(1rem, 3vh, 2.5rem);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.82);
+  pointer-events: none;
+  transition: opacity var(--dur-long) var(--ease-out),
+              transform var(--dur-long) var(--ease-out);
+}
+.motion.is-active {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.motion__symbol {
+  width: clamp(14rem, 32vw, 30rem);
+  aspect-ratio: 1;
+  color: var(--color-accent);
+  filter: drop-shadow(0 0 6vh oklch(74% 0.17 55 / 0.5));
+}
+.motion.is-active .motion__symbol {
+  animation: motion-pulse 1.6s var(--ease-in-out) infinite;
+}
+@keyframes motion-pulse {
+  0%, 100% { transform: scale(1);    }
+  50%      { transform: scale(1.06); }
+}
+.motion__symbol svg { width: 100%; height: 100%; display: block; }
+
+.motion__count {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-count);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-accent);
+}
+.motion__total { color: var(--color-muted); }
+
 /* ── HUD ── */
 .hud {
   position: fixed;

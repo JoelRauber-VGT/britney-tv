@@ -121,7 +121,53 @@ window.britney = {
 };
 
 /* ════════════════════════════════════════════════════════════════
- * 3 · KIOSK-ROBUSTHEIT
+ * 3 · BEWEGUNGS-TRIGGER (PIR-Sensor)
+ *
+ * Platzhalter für die späteren Mitte-Videos: Bei erkannter Bewegung
+ * wird kurz ein großes Symbol eingeblendet. Der Zähler läuft 1 → 4
+ * und springt nach der 4. Auslösung wieder auf 0.
+ *
+ * Anbindung des echten Sensors später: Ein kleines GPIO-Skript auf dem
+ * Pi ruft bei jeder Sensor-Flanke  window.britney.motion()  auf.
+ * Testen ohne Sensor: Leertaste drücken (oder britney.motion() in der Konsole).
+ * ════════════════════════════════════════════════════════════════ */
+
+const MOTION_TOTAL       = 4;     /* nach so vielen Auslösungen zurück auf 0 */
+const MOTION_SHOW_MS     = 2600;  /* wie lange das Symbol je Auslösung sichtbar bleibt */
+const MOTION_COOLDOWN_MS = 600;   /* entprellt schnelle PIR-Doppelpulse */
+
+const motionEl = $('motion');
+const motionCountEl = $('motionCount');
+let motionCount = 0;
+let motionHideTimer = null;
+let motionLocked = false;
+
+function triggerMotion() {
+  if (!motionEl || motionLocked) return;
+  motionLocked = true;
+  setTimeout(() => { motionLocked = false; }, MOTION_COOLDOWN_MS);
+
+  /* 1 → 2 → 3 → 4, danach wieder von vorn */
+  motionCount = motionCount >= MOTION_TOTAL ? 1 : motionCount + 1;
+  motionCountEl.textContent = String(motionCount);
+
+  motionEl.classList.add('is-active');
+  clearTimeout(motionHideTimer);
+  motionHideTimer = setTimeout(() => {
+    motionEl.classList.remove('is-active');
+    if (motionCount >= MOTION_TOTAL) motionCount = 0; /* Reset nach der 4. */
+  }, MOTION_SHOW_MS);
+}
+
+/* Test-Auslöser ohne Sensor: Leertaste */
+addEventListener('keydown', (e) => {
+  if (e.code === 'Space') { e.preventDefault(); triggerMotion(); }
+});
+
+window.britney.motion = triggerMotion;
+
+/* ════════════════════════════════════════════════════════════════
+ * 4 · KIOSK-ROBUSTHEIT
  * ════════════════════════════════════════════════════════════════ */
 
 /* Täglicher Auto-Reload gegen Browser-Memory-Drift im Dauerbetrieb */

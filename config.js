@@ -10,7 +10,7 @@ const CONFIG = {
   project: {
     label: 'VGT · Forschungsprojekt Britney',
     /* Phasen-Anzeige oben rechts. Leerer String '' blendet sie aus. */
-    phase: 'Phase 1 · Grundtraining',
+    phase: 'Phase 1 · Britney Core Platform',
 
     /* Projektstart. Vor diesem Zeitpunkt zeigt das Dashboard den
      * Vorlauf ("Startet am …"), danach läuft der Countdown. (ISO-Format) */

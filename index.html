@@ -11,6 +11,20 @@
 
   <div class="bloom" aria-hidden="true"></div>
 
+  <!-- Bewegungs-Overlay · Platzhalter für den späteren Video-Übergang.
+       Wird vom PIR-Sensor (bzw. britney.motion()) kurz eingeblendet. -->
+  <div class="motion" id="motion" aria-hidden="true">
+    <div class="motion__symbol">
+      <svg viewBox="0 0 100 100" fill="none" stroke="currentColor"
+           stroke-width="3" stroke-linecap="round">
+        <circle cx="50" cy="50" r="42" stroke-opacity="0.4"/>
+        <circle cx="50" cy="50" r="30"/>
+        <path d="M44 37 L66 50 L44 63 Z" fill="currentColor" stroke="none"/>
+      </svg>
+    </div>
+    <p class="motion__count"><span id="motionCount">0</span><span class="motion__total"> / 4</span></p>
+  </div>
+
   <!-- Oben: Projekt + Countdown -->
   <header class="hud hud--top reveal" style="--i: 0">
     <div class="masthead">
