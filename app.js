@@ -361,15 +361,17 @@ window.britney.reset   = async () => {                        /* zurück auf bri
 if (cfg.motion && cfg.motion.url) {
   let lastSeen = null;
   let dbgCount = -1;          /* zuletzt vom Server gelesener Zaehler (nur Debug) */
+  let dbgErr = '';            /* letzter fetch-Fehler (nur Debug) */
   const pollMotion = async () => {
     try {
       const res = await fetch(cfg.motion.url, { cache: 'no-store' });
       const { count } = await res.json();
       dbgCount = count;
+      dbgErr = `ok(${res.status})`;
       if (lastSeen === null) lastSeen = count;       /* beim Start nur synchronisieren */
       else if (count > lastSeen) { lastSeen = count; triggerMotion(); }
       else if (count < lastSeen) lastSeen = count;   /* Server neu gestartet (Zaehler bei 0) → resyncen, nicht blockieren */
-    } catch { /* Endpunkt nicht erreichbar → ignorieren */ }
+    } catch (e) { dbgErr = String(e && e.message || e); /* Endpunkt nicht erreichbar → ignorieren */ }
   };
   setInterval(pollMotion, cfg.motion.pollMs || 300);
 
@@ -393,10 +395,11 @@ if (cfg.motion && cfg.motion.url) {
     };
     setInterval(() => {
       dbg.textContent =
+        `origin : ${location.origin}\n` +
+        `motion : ${cfg.motion.url}  -> ${dbgErr}\n` +
         `server count : ${dbgCount}\n` +
         `lastSeen     : ${lastSeen}\n` +
         `stage        : ${stage}   busy=${busy}   front=${frontIdx}\n` +
-        `cooldown(ms) : ${Math.max(0, cooldownUntil - Date.now())}\n` +
         vidLine(layers[0], 'A') + '\n' +
         vidLine(layers[1], 'B');
     }, 150);
