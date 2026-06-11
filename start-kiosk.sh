@@ -21,15 +21,29 @@ python3 serve.py >/tmp/britney-serve.log 2>&1 &
 pkill -9 -f chromium 2>/dev/null
 rm -f "$HOME/.config/chromium/SingletonLock" 2>/dev/null
 
-# 2) Chromium-Kiosk (kurz warten, bis der Server lauscht)
-#    --password-store=basic: nutzt NICHT den GNOME-Keyring -> keine Passwort-
-#    Abfrage beim Start (sonst blockiert sie den Kiosk).
-#    Die drei --disable-*-Flags verhindern das Hintergrund-/Occlusion-Throttling:
-#    ohne sie drosselt Chromium Timer + requestAnimationFrame, sobald es das
-#    Fenster fuer verdeckt haelt -> Sensor-Polling und Uebergaenge frieren ein.
-sleep 3
+# Warten, bis der Server WIRKLICH antwortet (nicht nur 'sleep 3'). Nach einem
+# Kaltstart braucht serve.py manchmal laenger -> sonst laedt Chromium, bevor
+# /motion erreichbar ist, und das Sensor-Polling startet ins Leere.
+for i in $(seq 1 30); do
+  if curl -s -o /dev/null "http://localhost:8000/motion"; then break; fi
+  sleep 1
+done
+
+# 2) Chromium-Kiosk
+#    --password-store=basic: nutzt NICHT den GNOME-Keyring -> keine Passwort-Abfrage.
+#    --ozone-platform=wayland: native Wayland-Ausgabe unter labwc.
+#    --disable-session-crashed-bubble: kein "Wiederherstellen?"-Dialog nach hartem Kill.
+#    Die --disable-*backgrounding/throttling-Flags verhindern, dass Chromium Timer +
+#    requestAnimationFrame drosselt, sobald es das Fenster fuer verdeckt haelt
+#    (sonst frieren Sensor-Polling und Video-Uebergaenge ein).
+#    WICHTIG: Es darf nur EINE Stelle Chromium starten. Die Datei
+#    ~/.config/labwc/autostart darf KEINE eigene chromium-Zeile (v. a. mit file://)
+#    mehr enthalten, sonst kollidieren zwei Instanzen und die Seite laeuft ueber
+#    file:// -> /motion (Sensor) ist dann nicht erreichbar.
 "$CHROME" --kiosk --noerrdialogs --disable-infobars \
+  --ozone-platform=wayland \
   --disable-restore-session-state \
+  --disable-session-crashed-bubble \
   --password-store=basic \
   --autoplay-policy=no-user-gesture-required \
   --disable-background-timer-throttling \
