@@ -18,12 +18,50 @@ Optionen:
 Danach im Browser:  http://localhost:8000
 Beenden:            Strg+C
 """
+import json
 import os
 import shutil
 import sys
+import threading
 import webbrowser
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+
+# ── PIR-Sensor (BS412 an GPIO4) ───────────────────────────────────
+# serve.py liest den Sensor selbst und zaehlt jede Bewegung hoch. Die Seite
+# pollt /motion (gleicher Origin -> kein CORS, kein xdotool/Wayland-Problem).
+# Werte aus sensor/bs412_test.py: aktiv-high, interner Pull-down.
+MOTION_PIN = 4
+MOTION_PULL_UP = False
+_motion_count = 0
+_motion_lock = threading.Lock()
+_sensor = None            # haelt das Sensor-Objekt am Leben (sonst GC)
+
+
+def _bump_motion():
+    global _motion_count
+    with _motion_lock:
+        _motion_count += 1
+        n = _motion_count
+    print(f"Bewegung #{n}", flush=True)
+
+
+def start_motion_sensor():
+    """Startet den PIR-Sensor, falls GPIO/gpiozero verfuegbar sind.
+    Auf einem Entwicklungs-PC ohne GPIO wird still uebersprungen."""
+    global _sensor
+    try:
+        from gpiozero import DigitalInputDevice
+    except Exception:
+        print("gpiozero nicht vorhanden -> PIR-Sensor aus (Dev-Modus).", flush=True)
+        return
+    try:
+        _sensor = DigitalInputDevice(MOTION_PIN, pull_up=MOTION_PULL_UP)
+    except Exception as e:
+        print(f"PIR-Sensor an GPIO{MOTION_PIN} nicht verfuegbar: {e}", flush=True)
+        return
+    _sensor.when_activated = _bump_motion
+    print(f"PIR-Sensor aktiv: GPIO{MOTION_PIN} -> /motion", flush=True)
 
 # .woff2 / .mjs / .mp4 sauber ausliefern (aelteren Python-Versionen fehlt das teils)
 EXTRA_TYPES = {
@@ -47,6 +85,19 @@ class Handler(SimpleHTTPRequestHandler):
     extensions_map = {**SimpleHTTPRequestHandler.extensions_map, **EXTRA_TYPES}
     wbufsize = 1024 * 1024            # gepufferte Writes statt Byte-fuer-Byte
     disable_nagle_algorithm = True    # TCP_NODELAY -> keine Sende-Verzoegerung
+
+    def do_GET(self):
+        # Bewegungs-Zaehler fuer die Seite (gleicher Origin)
+        if self.path.split("?", 1)[0] == "/motion":
+            with _motion_lock:
+                body = json.dumps({"count": _motion_count}).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        super().do_GET()
 
     def copyfile(self, source, outputfile):
         # 1-MB-Bloecke statt der Standard-64 KB -> deutlich weniger Syscalls
@@ -151,6 +202,8 @@ def main():
 
     root = os.path.dirname(os.path.abspath(__file__))
     os.chdir(root)
+
+    start_motion_sensor()   # PIR-Sensor lesen (falls vorhanden)
 
     server = ThreadingHTTPServer(("0.0.0.0", port), partial(Handler, directory=root))
     url = f"http://localhost:{port}/"

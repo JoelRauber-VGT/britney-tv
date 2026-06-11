@@ -323,6 +323,23 @@ window.britney.reset   = async () => {                        /* zurück auf bri
   preload(back(), clip(`transition_${stage}`));
 };
 
+/* Echte Sensor-Anbindung: serve.py liest den PIR-Sensor und zählt unter
+   /motion hoch. Steigt der Zähler, kam eine neue Bewegung → weiterschalten.
+   Gleicher Origin wie die Seite → kein CORS, kein xdotool. Fehler (z. B. lokal
+   ohne serve.py) werden still verschluckt — die Leertaste funktioniert weiter. */
+if (cfg.motion && cfg.motion.url) {
+  let lastSeen = null;
+  const pollMotion = async () => {
+    try {
+      const res = await fetch(cfg.motion.url, { cache: 'no-store' });
+      const { count } = await res.json();
+      if (lastSeen === null) lastSeen = count;       /* beim Start nur synchronisieren */
+      else if (count > lastSeen) { lastSeen = count; triggerMotion(); }
+    } catch { /* Endpunkt nicht erreichbar → ignorieren */ }
+  };
+  setInterval(pollMotion, cfg.motion.pollMs || 300);
+}
+
 /* ════════════════════════════════════════════════════════════════
  * 4 · KIOSK-ROBUSTHEIT
  * ════════════════════════════════════════════════════════════════ */

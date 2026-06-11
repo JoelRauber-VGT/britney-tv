@@ -51,4 +51,13 @@ const CONFIG = {
      * im Dauerbetrieb. -1 = aus. */
     dailyReloadHour: 4,
   },
+
+  /* PIR-Sensor (BS412): serve.py liest GPIO4 und zählt unter /motion hoch.
+   * Die Seite pollt diese Adresse (gleicher Origin wie die Seite → kein CORS).
+   * Bei jedem neuen Zählerstand wird eine Video-Stufe weitergeschaltet.
+   * url: '' schaltet das Pollen aus (dann nur Leertaste). */
+  motion: {
+    url: '/motion',
+    pollMs: 300,
+  },
 };

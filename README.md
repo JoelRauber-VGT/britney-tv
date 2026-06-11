@@ -52,24 +52,14 @@ ergänzen bzw. entfernen und `video.stages` anpassen.
 
 ## Bewegungssensor & Steuerung über die Shell
 
-Eine Stufe wird auf drei Wegen ausgelöst — alle laufen über denselben Pfad
+Eine Stufe wird auf zwei Wegen ausgelöst — beide laufen über denselben Pfad
 (`window.britney.motion()`):
 
-- **PIR-Sensor (BS412):** `sensor/bs412_motion.py` schaltet bei jeder Bewegung
-  eine Stufe weiter. Vorher Pin/Pegel mit `sensor/bs412_test.py` prüfen und im
-  Skript oben (`PIN`, `PULL_UP`, `ACTIVE_VALUE`) eintragen.
-
-  ```bash
-  sudo apt install xdotool          # einmalig
-  DISPLAY=:0 python3 sensor/bs412_motion.py
-  ```
-
-- **Pi-Shell (Test ohne Sensor):** löst per Tastendruck genau eine Stufe aus —
-  ideal zum Durchklicken aller Übergänge.
-
-  ```bash
-  DISPLAY=:0 xdotool key space
-  ```
+- **PIR-Sensor (BS412):** `serve.py` liest GPIO4 selbst und zählt jede Bewegung
+  unter `/motion` hoch; die Seite pollt das und schaltet weiter. Kein xdotool,
+  kein separater Prozess, **funktioniert auch unter Wayland**. Pin/Pegel mit
+  `sensor/bs412_test.py` prüfen; die Werte stehen in `serve.py`
+  (`MOTION_PIN`, `MOTION_PULL_UP`). Details: `sensor/README.md`.
 
 - **Browser-Konsole / lokaler Test:** Leertaste drücken oder
 
@@ -79,9 +69,6 @@ Eine Stufe wird auf drei Wegen ausgelöst — alle laufen über denselben Pfad
   britney.reset();     // zurück auf britney_1
   britney.stage();     // aktuelle Stufe abfragen
   ```
-
-Der Sensor-Weg nutzt `xdotool key space`, weil das Dashboard ohne Webserver
-direkt über `file://` läuft — so ist keine Browser-Anbindung (Server/CDP) nötig.
 
 ## Start über localhost
 
@@ -109,10 +96,7 @@ Internet nötig.
 
 # 2. Bildschirm auf Hochformat drehen (Einstellungen → Screen Configuration)
 
-# 3. xdotool installieren (PFLICHT für den PIR-Sensor-Trigger):
-sudo apt install xdotool
-
-# 4. Autostart einrichten — ruft das Start-Skript auf (Server → Chromium → Sensor).
+# 3. Autostart einrichten — ruft das Start-Skript auf (Server + Chromium).
 #    Pfad an euren Repo-Ort anpassen (hier: /home/britney-tv/britney-tv).
 mkdir -p ~/.config/autostart
 cat > ~/.config/autostart/britney.desktop <<'DESKTOP'
@@ -122,14 +106,15 @@ Name=Britney Dashboard
 Exec=/home/britney-tv/britney-tv/start-kiosk.sh
 DESKTOP
 
-# 5. Bildschirm-Blanking ausschalten:
+# 4. Bildschirm-Blanking ausschalten:
 sudo raspi-config   # → Display Options → Screen Blanking → Off
 ```
 
-`start-kiosk.sh` startet Webserver, Chromium-Kiosk und den Sensor in der
-richtigen Reihenfolge und schreibt Logs nach `/tmp/britney-serve.log`,
-`/tmp/britney-chromium.log`, `/tmp/britney-sensor.log` — bei Problemen
-zuerst dort nachsehen.
+`start-kiosk.sh` startet Webserver und Chromium-Kiosk und schreibt Logs nach
+`/tmp/britney-serve.log` und `/tmp/britney-chromium.log` — bei Problemen
+zuerst dort nachsehen. Der **PIR-Sensor läuft im Server mit** (`serve.py`
+liest GPIO4 und stellt ihn unter `/motion` bereit) — kein xdotool, kein
+separater Sensor-Prozess, funktioniert auch unter Wayland.
 
 Täglicher Auto-Reload um 4 Uhr (`kiosk.dailyReloadHour`) gegen Memory-Drift im
 Dauerbetrieb.
@@ -139,12 +124,12 @@ Dauerbetrieb.
 | Datei | Zweck |
 | --- | --- |
 | `config.js` | **Die einzige Datei für den Alltag** — IQ, Daten, Texte, Videos |
-| `serve.py` | Lokaler Webserver (`http://localhost:8000`), nur Python-Stdlib |
+| `serve.py` | Lokaler Webserver (`http://localhost:8000`) + PIR-Sensor → `/motion` |
+| `start-kiosk.sh` | Autostart-Skript: startet Server + Chromium-Kiosk |
 | `index.html` | Seitengerüst (HUD + Video- und Logo-Bühne) |
 | `app.js` | Countdown, IQ-Anzeige, Video-Steuerung, `britney`-API, Auto-Reload |
 | `tokens.css` / `style.css` | Design-Tokens und Layout |
 | `vgt.png` / `fhnw.jpg` | Logos der Forschungskooperation |
 | `vidoes/` | Britney-Videos (`britney_N.mp4`, `transition_N.mp4`) |
 | `sensor/bs412_test.py` | PIR-Schnelltest: zeigt Pin-Pegel live an |
-| `sensor/bs412_motion.py` | PIR im Betrieb → schaltet bei Bewegung eine Stufe weiter |
 | `vendor/fonts/` | Schriften, lokal eingebunden (offline-fest) |
