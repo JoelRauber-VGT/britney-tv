@@ -14,9 +14,9 @@ from gpiozero import DigitalInputDevice
 import time
 
 # ── Anpassen ──────────────────────────────────────────────────────
-PIN = 4          # BCM-Nummer, an der "Direct Link" haengt
-PULL_UP = True   # BS412 ist open-drain -> interner Pull-up an.
-                 # Falls ihr einen externen Pull-Widerstand verbaut habt: False
+PIN = 4           # BCM-Nummer, an der OUT (Sensor-Pin 4) haengt = GPIO4
+PULL_UP = False   # BS412-OUT geht bei Bewegung aktiv auf 3,3 V high
+                  # -> interner Pull-down (pull_up=False), aktiv = High.
 # ──────────────────────────────────────────────────────────────────
 
 sensor = DigitalInputDevice(PIN, pull_up=PULL_UP)
