@@ -22,6 +22,7 @@ sleep 3
   --disable-restore-session-state \
   --password-store=basic \
   --autoplay-policy=no-user-gesture-required \
+  --remote-debugging-port=9222 \
   http://localhost:8000/ >/tmp/britney-chromium.log 2>&1 &
 
 wait
