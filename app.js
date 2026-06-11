@@ -91,6 +91,14 @@ function showIQ(value, animate = true) {
     $('iqDot').style.left = `${f * 100}%`;
   };
 
+  /* 0 = noch keine Daten: »--«, leerer Balken, kein Hochzählen */
+  if (!value) {
+    el.textContent = '--';
+    $('iqFill').style.transform = 'scaleX(0)';
+    $('iqDot').style.left = '0%';
+    return;
+  }
+
   if (!animate || reducedMotion) { paint(value, frac); return; }
   const from = cfg.iq.start;
   const t0 = performance.now();
