@@ -1,0 +1,14 @@
+[Unit]
+Description=Britney PIR Motion Bridge (BS412 -> Dashboard)
+After=network.target
+
+[Service]
+Type=simple
+User=britney-tv
+WorkingDirectory=/home/britney-tv/britney-tv
+ExecStart=/usr/bin/python3 /home/britney-tv/britney-tv/sensor/motion_bridge.py
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

@@ -36,4 +36,14 @@ const CONFIG = {
      * im Dauerbetrieb. -1 = aus. */
     dailyReloadHour: 4,
   },
+
+  /* Bewegungs-Trigger über den BS412-PIR-Sensor.
+   * Das Bridge-Skript (sensor/motion_bridge.py) liest GPIO4 und stellt
+   * einen Zähler unter dieser lokalen Adresse bereit. Das Dashboard pollt
+   * sie; läuft die Bridge nicht, bleibt alles still (Leertaste geht weiter).
+   * url: '' schaltet das Pollen komplett aus. */
+  motion: {
+    url: 'http://127.0.0.1:8765/motion',
+    pollMs: 300,
+  },
 };
