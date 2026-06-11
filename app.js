@@ -22,7 +22,7 @@ if (phaseEl) {
   if (!cfg.project.phase) phaseEl.remove();
 }
 if ($('caption')) $('caption').innerHTML = cfg.collab.caption.replace(
-  /»(.+?)«/, '<strong>»$1«</strong>');
+  /»(.+?)«/, '<strong>$1</strong>');
 
 /* ════════════════════════════════════════════════════════════════
  * 1 · COUNTDOWN

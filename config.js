@@ -14,7 +14,7 @@ const CONFIG = {
 
     /* ⚠ PLATZHALTER — bitte echte Daten eintragen (ISO-Format) */
     start: '2026-06-01T08:00:00',
-    end:   '2026-12-31T17:00:00',
+    end:   '2029-06-01T17:00:00',   /* Projektlaufzeit 3 Jahre */
   },
 
   iq: {
@@ -24,7 +24,8 @@ const CONFIG = {
   },
 
   /* Mittel-Visualisierung: Forschungskooperation VGT × FHNW.
-   * Texte hier zentral änderbar. */
+   * Texte hier zentral änderbar. Der von »…« umschlossene Teil wird fett
+   * gesetzt — die Anführungszeichen selbst werden NICHT angezeigt. */
   collab: {
     caption: 'Gemeinsames KI-Forschungsprojekt »Britney«',
   },
