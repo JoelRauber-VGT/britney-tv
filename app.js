@@ -127,15 +127,15 @@ window.britney = {
  * einmal  →  britney_2 läuft im Loop  →  Bewegung  →  transition_2 …
  * Nach der letzten Stufe (transition_N) geht es zurück auf britney_1.
  *
- * Ausgelöst wird eine Stufe durch:
- *   • den PIR-Sensor am Pi  → die Shell sendet einen Leertasten-Druck
- *     (sensor/bs412_motion.py), das löst denselben Weg aus wie der Test;
- *   • die Leertaste          (lokaler Test ohne Sensor);
- *   • britney.advance()      (in der Browser-Konsole).
+ * Ausgelöst wird eine Stufe durch (alle über dieselbe Funktion triggerMotion):
+ *   • den PIR-Sensor  → serve.py zählt /motion hoch, die Seite pollt;
+ *   • die Leertaste   (lokaler Test ohne Sensor);
+ *   • britney.advance() (in der Browser-Konsole).
  *
- * Technik: zwei gestapelte <video>. Der JEWEILS NÄCHSTE Clip wird schon
- * gepuffert, während der aktuelle läuft — beim Umschalten ist er also bereits
- * fertig geladen. Das verhindert das Ruckeln/„Bugs" beim Übergang.
+ * Technik bewusst SIMPEL & hängsicher: zwei gestapelte <video>, beim Wechsel
+ * wird auf der versteckten Ebene src gesetzt + play() + die Opacity-Klasse
+ * getauscht (CSS-Crossfade). Das Ende des Übergangs wird über 'ended',
+ * 'timeupdate' UND einen Timeout erkannt — die Umschaltung kann nie hängen.
  * ════════════════════════════════════════════════════════════════ */
 
 const V = cfg.video;
@@ -143,164 +143,68 @@ const clip = (name) => `${V.dir}/${name}.mp4`;
 const layers = [$('vidA'), $('vidB')];
 const hasVideo = !!layers[0];
 
-let frontIdx = 0;
+let frontIdx = 0;                  /* welche Ebene gerade sichtbar ist */
 let stage = V.startStage || 1;     /* aktueller Stand-Loop: britney_<stage> */
-let busy = false;                  /* true, während ein Übergang läuft */
-let cooldownUntil = 0;
-
-const back = () => layers[frontIdx ^ 1];   /* versteckte Ebene (Puffer) */
-const front = () => layers[frontIdx];      /* sichtbare Ebene */
+let switching = false;             /* true, während ein Übergang läuft (entprellt) */
 
 if (hasVideo) {
-  layers.forEach((v) => { v.muted = V.muted !== false; v.preload = 'auto'; });
+  layers.forEach((v) => { v.muted = V.muted !== false; v.playsInline = true; v.preload = 'auto'; });
   document.documentElement.style.setProperty('--britney-fade', `${V.crossfadeMs || 160}ms`);
 }
 
-/* Clip auf eine (versteckte) Ebene laden — nur puffern, nicht anzeigen.
-   Per dataset.clip wird ein erneutes Laden desselben Clips vermieden. */
-function preload(el, src) {
-  if (!el || el.dataset.clip === src) return;
-  el.dataset.clip = src;
-  el.src = src;
-  el.load();
-}
-
-/* Wartet, bis ein Element flüssig durchspielbereit ist (mit Sicherheits-Timeout,
-   falls canplaythrough mal nicht feuert). */
-function whenReady(el) {
-  return new Promise((resolve) => {
-    if (el.readyState >= 4) { resolve(); return; }   /* HAVE_ENOUGH_DATA */
-    let done = false;
-    const ok = () => {
-      if (done) return; done = true;
-      el.removeEventListener('canplaythrough', ok);
-      el.removeEventListener('canplay', ok);
-      clearTimeout(timer);
-      resolve();
-    };
-    el.addEventListener('canplaythrough', ok, { once: true });
-    el.addEventListener('canplay', ok, { once: true });   /* Fallback */
-    const timer = setTimeout(ok, 2500);                   /* Notbremse */
-  });
-}
-
-/* Wartet, bis das Element seinen ERSTEN Frame tatsächlich präsentiert hat. */
-function firstFrame(el) {
-  return new Promise((resolve) => {
-    let done = false;
-    const ok = () => { if (done) return; done = true; clearTimeout(timer); resolve(); };
-    if (el.requestVideoFrameCallback) {
-      el.requestVideoFrameCallback(() => ok());
-    } else {
-      requestAnimationFrame(() => requestAnimationFrame(ok));   /* Fallback */
-    }
-    const timer = setTimeout(ok, 250);   /* Notbremse, falls rVFC nicht feuert */
-  });
-}
-
-/* Wartet n Animations-Frames (Compositor-Takte). */
-function nextFrames(n) {
-  return new Promise((resolve) => {
-    let i = 0;
-    const step = () => { if (++i >= n) resolve(); else requestAnimationFrame(step); };
-    requestAnimationFrame(step);
-  });
-}
-
-/* Die (bereits gepufferte) hintere Ebene abspielen und nach vorn holen.
-
-   Kern gegen das Stale-Frame-Flackern: Die ON-SCREEN-Textur einer opacity:0-
-   Ebene wird nicht aktualisiert — beim Einblenden blitzt daher kurz ihr altes
-   Bild (= Endframe des vorigen Übergangs) auf. Lösung: die neue Ebene VOLL
-   deckend, aber HINTER die aktuelle legen (z-index). Die aktuelle verdeckt sie
-   mittig, sie ist fürs Auge unsichtbar, komponiert aber ihren Live-Frame. Dann
-   blenden wir nur die ALTE Ebene aus — die neue liegt schon live darunter. */
-async function reveal(loop) {
-  const b = back();
-  const f = front();
-  b.loop = loop;
-  b.onended = null;
-  await whenReady(b);
-  try { b.currentTime = 0; } catch (_) {}
-  try { await b.play(); } catch (_) {}   /* Autoplay-Reject schluckt sich harmlos */
-  await firstFrame(b);                    /* erster Frame ist dekodiert */
-
-  /* 1) Neue Ebene voll sichtbar, aber HINTER die alte → komponiert Live-Frame,
-        ohne dass man sie sieht (die alte deckt sie ab). */
-  b.style.transition = 'none';
-  b.style.opacity = '1';
-  b.style.zIndex = '1';
-  f.style.zIndex = '2';
-  await nextFrames(2);                    /* Textur der neuen Ebene ist jetzt live */
-
-  /* 2) Nur die ALTE Ebene ausblenden — die neue kommt live zum Vorschein. */
-  const fade = V.crossfadeMs || 0;
-  f.style.transition = fade > 0 ? `opacity ${fade}ms linear` : 'none';
-  f.style.opacity = '0';
-  b.classList.add('is-front');           /* nur zur Zustandsmarkierung */
-  f.classList.remove('is-front');
+/* Einen Clip auf die versteckte Ebene legen, abspielen und per Crossfade nach
+   vorn holen. Bewusst simpel: src setzen, play(), Opacity-Klasse tauschen — den
+   Crossfade macht das CSS (.britney__vid / .is-front, transition: opacity). */
+function show(name, loop) {
+  if (!hasVideo) return null;
+  const cur = layers[frontIdx];
+  const nxt = layers[frontIdx ^ 1];
+  nxt.loop = loop;
+  nxt.onended = null;
+  nxt.ontimeupdate = null;
+  nxt.src = clip(name);
+  nxt.play().catch(() => {});        /* Autoplay-Reject harmlos schlucken */
+  nxt.classList.add('is-front');     /* einblenden */
+  cur.classList.remove('is-front');  /* ausblenden */
   frontIdx ^= 1;
-
-  /* Erst zurückkehren, wenn die ALTE Ebene wirklich ausgeblendet (opacity 0)
-     und pausiert ist. Sonst lädt der Aufrufer den nächsten Clip per preload()
-     in genau diese Ebene, WÄHREND sie noch sichtbar ausblendet — ihr Bild
-     springt dann mitten im Fade auf den Startframe des nächsten Clips
-     (= das kurze »Aufblitzen« des nächsten Bildes beim Weiterschalten). */
-  await new Promise((resolve) => {
-    const cleanup = () => {
-      try { f.pause(); } catch (_) {}     /* nie zwei Clips gleichzeitig decodieren */
-      f.style.zIndex = '';
-      b.style.zIndex = '';
-      f.style.transition = '';
-      b.style.transition = '';
-      resolve();
-    };
-    if (fade > 0) setTimeout(cleanup, fade + 80); else cleanup();
-  });
-  return layers[frontIdx];   /* = b, jetzt vorne */
+  return nxt;
 }
 
-/* Eine Stufe weiterschalten: Übergang spielen, dann nächsten Stand-Loop.
-   Beide sind dank Vorab-Pufferung schon geladen → kein Ruckeln. */
-async function advance() {
-  if (!hasVideo || busy) return;
-  busy = true;
-  try {
-    preload(back(), clip(`transition_${stage}`));   /* i. d. R. schon vorbereitet */
-    const t = await reveal(false);                  /* Übergang einmal abspielen */
+/* Eine Stufe weiter: transition_<stage> einmal spielen, dann britney_<next>
+   loopen. Robust gegen den Pi: das Ende des Übergangs wird über 'ended',
+   'timeupdate' UND einen Timeout erkannt — kann also NIE hängen bleiben. */
+function advance() {
+  if (!hasVideo || switching) return;
+  switching = true;
 
-    const nextStage = (stage % V.stages) + 1;
-    preload(back(), clip(`britney_${nextStage}`));  /* nächsten Loop puffern, während der Übergang läuft */
-    await new Promise((res) => { t.onended = res; });
-
-    stage = nextStage;
-    await reveal(true);                             /* nächster Stand-Loop */
-    preload(back(), clip(`transition_${stage}`));   /* schon den Folge-Übergang vorbereiten */
-  } finally {
-    busy = false;
-    cooldownUntil = Date.now() + (V.cooldownMs || 0);
-  }
+  const t = show(`transition_${stage}`, false);
+  let done = false;
+  const goNext = () => {
+    if (done) return;
+    done = true;
+    t.onended = null;
+    t.ontimeupdate = null;
+    clearTimeout(timer);
+    stage = (stage % V.stages) + 1;
+    show(`britney_${stage}`, true);
+    switching = false;
+  };
+  t.onended = goNext;
+  t.ontimeupdate = () => { if (t.duration && t.currentTime >= t.duration - 0.2) goNext(); };
+  const timer = setTimeout(goNext, 12000);   /* Notbremse, falls kein End-Event feuert */
 }
 
-/* Eine Bewegungs-Auslösung — entprellt, ignoriert Pulse während eines Übergangs */
-function triggerMotion() {
-  if (busy || Date.now() < cooldownUntil) return;
-  advance();
-}
+/* Eine Bewegungs-Auslösung — Sensor UND Leertaste laufen über genau diese Funktion */
+function triggerMotion() { advance(); }
 
 /* Test-Auslöser ohne Sensor: Leertaste (auch der Weg, den die Pi-Shell nutzt) */
 addEventListener('keydown', (e) => {
   if (e.code === 'Space') { e.preventDefault(); triggerMotion(); }
 });
 
-/* Start: ersten Stand-Loop anzeigen, dann ersten Übergang + restliche Clips
-   im Hintergrund vorpuffern, damit jeder Wechsel sofort flüssig läuft. */
-async function startBritney() {
-  if (!hasVideo) return;
-  preload(back(), clip(`britney_${stage}`));
-  await reveal(true);
-  preload(back(), clip(`transition_${stage}`));
-  /* Cache aller übrigen Clips vorwärmen (Dateien sind cachebar ausgeliefert) */
+/* Start: ersten Stand-Loop zeigen + restliche Clips im Hintergrund vorwärmen */
+if (hasVideo) {
+  show(`britney_${stage}`, true);
   setTimeout(() => {
     for (let i = 1; i <= V.stages; i++) {
       fetch(clip(`britney_${i}`)).catch(() => {});
@@ -308,19 +212,15 @@ async function startBritney() {
     }
   }, 1500);
 }
-startBritney();
 
 /* Öffentliche API erweitern */
 window.britney.motion  = triggerMotion;                       /* eine Bewegung (PIR/Shell/Test) */
 window.britney.advance = advance;                             /* sofort eine Stufe weiter */
 window.britney.stage   = () => stage;                         /* aktuelle Stufe abfragen */
-window.britney.reset   = async () => {                        /* zurück auf britney_1 */
+window.britney.reset   = () => {                              /* zurück auf britney_1 */
+  switching = false;
   stage = V.startStage || 1;
-  busy = false;
-  cooldownUntil = 0;
-  preload(back(), clip(`britney_${stage}`));
-  await reveal(true);
-  preload(back(), clip(`transition_${stage}`));
+  show(`britney_${stage}`, true);
 };
 
 /* Echte Sensor-Anbindung: serve.py liest den PIR-Sensor und zählt unter
