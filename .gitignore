@@ -1,2 +1,5 @@
 __pycache__/
 *.pyc
+
+# Backup der Original-Transitions (vor Pi-Re-Encode)
+vidoes/_orig/
