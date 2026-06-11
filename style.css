@@ -201,7 +201,7 @@ body {
   transform: translateY(-0.06em);
 }
 
-.meta { margin-top: var(--space-lg); max-width: 64ch; }
+.meta { margin-top: var(--space-lg); }   /* volle Breite (innerhalb des HUD-Rands) */
 .meta__dates {
   margin: 0 0 var(--space-sm);
   font-size: var(--text-qualifier);
@@ -211,6 +211,8 @@ body {
   font-weight: 600;
   color: var(--color-ink);
 }
+/* "Tag X von Y" eine Zeile unter Start/Ende */
+.meta__day { display: block; margin-top: var(--space-xs); }
 
 /* Fortschritts-Hairline (Projekt + IQ) */
 .track {

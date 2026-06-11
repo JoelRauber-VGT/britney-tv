@@ -34,8 +34,8 @@ const end = new Date(cfg.project.end);
 
 $('dates').innerHTML =
   `Gestartet am <strong>${fmtDate.format(start)}</strong> · ` +
-  `endet am <strong>${fmtDate.format(end)}</strong> · ` +
-  `<span id="dayOf"></span>`;
+  `endet am <strong>${fmtDate.format(end)}</strong>` +
+  `<span class="meta__day" id="dayOf"></span>`;
 
 function tick() {
   const now = Date.now();
