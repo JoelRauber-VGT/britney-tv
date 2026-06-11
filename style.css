@@ -45,7 +45,7 @@ body {
   justify-content: flex-end;   /* Logos nach unten gerückt */
   gap: clamp(1.5rem, 4vh, 4rem);
   /* hält Abstand zu Countdown (oben) und IQ-Banner (unten) */
-  padding: 24vh 5vw 22vh;
+  padding: 24vh 5vw 16vh;
   text-align: center;
   pointer-events: none;
 }
