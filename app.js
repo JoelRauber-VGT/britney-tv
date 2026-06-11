@@ -356,6 +356,7 @@ if (cfg.motion && cfg.motion.url) {
       const { count } = await res.json();
       if (lastSeen === null) lastSeen = count;       /* beim Start nur synchronisieren */
       else if (count > lastSeen) { lastSeen = count; triggerMotion(); }
+      else if (count < lastSeen) lastSeen = count;   /* Server neu gestartet (Zaehler bei 0) → resyncen, nicht blockieren */
     } catch { /* Endpunkt nicht erreichbar → ignorieren */ }
   };
   setInterval(pollMotion, cfg.motion.pollMs || 300);
