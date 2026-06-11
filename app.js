@@ -29,34 +29,50 @@ if ($('caption')) $('caption').innerHTML = cfg.collab.caption.replace(
  * ════════════════════════════════════════════════════════════════ */
 
 const fmtDate = new Intl.DateTimeFormat('de-CH', { day: 'numeric', month: 'long', year: 'numeric' });
-const start = new Date(cfg.project.start);
-const end = new Date(cfg.project.end);
+const start = new Date(cfg.project.start).getTime();
+const end = new Date(cfg.project.end).getTime();
+const totalMs = end - start;
 
-$('dates').innerHTML =
-  `Gestartet am <strong>${fmtDate.format(start)}</strong> · ` +
-  `endet am <strong>${fmtDate.format(end)}</strong>` +
-  `<span class="meta__day" id="dayOf"></span>`;
+const startStr = `<strong>${fmtDate.format(start)}</strong>`;
+const endStr = `<strong>${fmtDate.format(end)}</strong>`;
+
+/* Die Datums-Zeile wechselt beim Projektstart von "Startet" → "Gestartet"
+   (+ "Tag X von Y"). Nur bei Zustandswechsel neu schreiben. */
+let started = null;
+function renderDates(hasStarted) {
+  $('dates').innerHTML = hasStarted
+    ? `Gestartet am ${startStr} · endet am ${endStr}` +
+      `<span class="meta__day" id="dayOf"></span>`
+    : `Startet am ${startStr} · endet am ${endStr}`;
+}
+
+function setCount(ms) {
+  $('cd').textContent = String(Math.floor(ms / 86_400_000));
+  $('ch').textContent = String(Math.floor(ms / 3_600_000) % 24).padStart(2, '0');
+  $('cm').textContent = String(Math.floor(ms / 60_000) % 60).padStart(2, '0');
+  $('cs').textContent = String(Math.floor(ms / 1000) % 60).padStart(2, '0');
+}
 
 function tick() {
   const now = Date.now();
-  const left = Math.max(0, end - now);
+  const hasStarted = now >= start;
+  if (hasStarted !== started) { started = hasStarted; renderDates(hasStarted); }
 
-  const dd = Math.floor(left / 86_400_000);
-  const hh = Math.floor(left / 3_600_000) % 24;
-  const mm = Math.floor(left / 60_000) % 60;
-  const ss = Math.floor(left / 1000) % 60;
+  if (!hasStarted) {
+    /* Vorlauf: Countdown auf die volle Laufzeit (≈3 Jahre) eingefroren,
+       Fortschrittsbalken leer. Schaltet am Startdatum automatisch um. */
+    setCount(totalMs);
+    $('projFill').style.transform = 'scaleX(0)';
+    return;
+  }
 
-  $('cd').textContent = String(dd);
-  $('ch').textContent = String(hh).padStart(2, '0');
-  $('cm').textContent = String(mm).padStart(2, '0');
-  $('cs').textContent = String(ss).padStart(2, '0');
-
-  const total = end - start;
-  const elapsed = Math.min(Math.max(now - start, 0), total);
-  $('projFill').style.transform = `scaleX(${elapsed / total})`;
-  const totalDays = Math.ceil(total / 86_400_000);
+  setCount(Math.max(0, end - now));
+  const elapsed = Math.min(Math.max(now - start, 0), totalMs);
+  $('projFill').style.transform = `scaleX(${elapsed / totalMs})`;
+  const totalDays = Math.ceil(totalMs / 86_400_000);
   const dayOf = Math.min(Math.ceil(Math.max(now - start, 0) / 86_400_000) || 1, totalDays);
-  $('dayOf').textContent = `Tag ${dayOf} von ${totalDays}`;
+  const dayEl = $('dayOf');
+  if (dayEl) dayEl.textContent = `Tag ${dayOf} von ${totalDays}`;
 }
 tick();
 setInterval(tick, 1000);

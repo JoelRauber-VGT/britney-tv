@@ -12,9 +12,10 @@ const CONFIG = {
     /* Phasen-Anzeige oben rechts. Leerer String '' blendet sie aus. */
     phase: 'Phase 1 · Grundtraining',
 
-    /* ⚠ PLATZHALTER — bitte echte Daten eintragen (ISO-Format) */
-    start: '2026-06-01T08:00:00',
-    end:   '2029-06-01T17:00:00',   /* Projektlaufzeit 3 Jahre */
+    /* Projektstart. Vor diesem Zeitpunkt zeigt das Dashboard den
+     * Vorlauf ("Startet am …"), danach läuft der Countdown. (ISO-Format) */
+    start: '2026-07-01T08:00:00',
+    end:   '2029-07-01T17:00:00',   /* Projektlaufzeit 3 Jahre */
   },
 
   iq: {
