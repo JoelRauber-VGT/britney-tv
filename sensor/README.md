@@ -1,8 +1,13 @@
-# PIR-Sensor (BS412) → Dashboard
+# PIR-Sensor (BS412) → Britney-Videos
 
-Bewegungs-Trigger für die Mitte des Dashboards. Bei erkannter Bewegung
-blendet das Dashboard kurz ein Symbol ein (Platzhalter für den späteren
-Video-Übergang), Zähler läuft 1 → 4 und springt danach auf 0.
+Bewegungs-Trigger für die Mitte des Dashboards. Bei jeder erkannten Bewegung
+wird eine Stufe weitergeschaltet: `britney_N` (Loop) → `transition_N` (einmal)
+→ `britney_(N+1)` (Loop). Nach der letzten Stufe geht es zurück auf `britney_1`.
+
+Technik: `bs412_motion.py` liest GPIO4 und sendet bei Bewegung einen
+**Leertasten-Druck** an den Kiosk-Browser (`xdotool key space`) — exakt der
+Weg, den auch der manuelle Test nutzt. Kein zusätzlicher Webserver für den
+Sensor, keine Browser-Änderung nötig.
 
 ## Hardware
 
@@ -17,6 +22,8 @@ Reichweite ~5 m / 120°. Pinbelegung laut Datenblatt: `1=GND · 2=ONTIME ·
 | 4 (Seite) | OUT | Pin 7 (GPIO4) |
 | 2 (Seite) | ONTIME | Pin 9 (GND) → 2 s Haltezeit |
 
+Bestätigte Pegel: `PULL_UP = False`, **Bewegung = 1** (aktiv-high).
+
 ## 1. Hardware testen
 
 ```bash
@@ -24,19 +31,27 @@ python3 sensor/bs412_test.py
 ```
 Hand quer vor der Linse bewegen → `GPIO4` wechselt 0 ↔ 1. Beenden mit Strg+C.
 
-## 2. Bridge starten (manuell)
+## 2. Dashboard starten (Videos brauchen HTTP)
 
 ```bash
-python3 sensor/motion_bridge.py
+python3 serve.py            # serviert http://localhost:8000
 ```
-Liest GPIO4 und stellt den Zähler unter `http://127.0.0.1:8765/motion`
-bereit. Das Dashboard pollt diese Adresse automatisch (siehe `config.js`
-→ `motion.url`).
+Chromium im Kiosk auf `http://localhost:8000` zeigen lassen. Die Leertaste
+schaltet das Video manuell weiter (Test ohne Sensor).
 
-> Es kann nur **ein** Prozess den GPIO halten — vor der Bridge den
-> Hardware-Test beenden.
+## 3. Sensor-Trigger starten
 
-## 3. Autostart beim Booten (systemd)
+Voraussetzung einmalig:
+```bash
+sudo apt install xdotool
+```
+Dann (Test vorher mit Strg+C beenden — nur ein Prozess darf den GPIO halten):
+```bash
+DISPLAY=:0 python3 sensor/bs412_motion.py
+```
+Bewegung vor dem Sensor → Video schaltet eine Stufe weiter.
+
+## 4. Autostart beim Booten (systemd)
 
 ```bash
 sudo cp sensor/britney-motion.service /etc/systemd/system/
@@ -50,7 +65,6 @@ systemctl status britney-motion.service
 journalctl -u britney-motion.service -f
 ```
 
-Danach läuft die Bridge automatisch mit jedem Boot — nichts mehr von Hand
-zu starten. Der Service-Pfad geht von `~/britney-tv/britney-tv` aus; liegt
-das Repo woanders, `WorkingDirectory` und `ExecStart` in der `.service`-Datei
-anpassen.
+Der Service geht von `~/britney-tv/britney-tv` und Benutzer `britney-tv` aus
+und braucht das X-Display des Kiosks (`DISPLAY=:0`). Liegt das Repo woanders
+oder heißt der Benutzer anders, die `.service`-Datei anpassen.

@@ -115,73 +115,213 @@ $('iqTarget').textContent = String(cfg.iq.target);
 
 setTimeout(() => showIQ(cfg.iq.current), 600);
 
-/* Öffentliche API — IQ live ändern, ohne Reload:  britney.setIQ(85) */
+/* Öffentliche API — wird unten (Video-Abschnitt) noch erweitert. */
 window.britney = {
   setIQ: (v) => { cfg.iq.current = v; showIQ(v); },
 };
 
 /* ════════════════════════════════════════════════════════════════
- * 3 · BEWEGUNGS-TRIGGER (PIR-Sensor)
+ * 3 · BRITNEY-VIDEOS (Mitte) + BEWEGUNGS-TRIGGER
  *
- * Platzhalter für die späteren Mitte-Videos: Bei erkannter Bewegung
- * wird kurz ein großes Symbol eingeblendet. Der Zähler läuft 1 → 4
- * und springt nach der 4. Auslösung wieder auf 0.
+ * Ablauf:  britney_1 läuft im Loop  →  Bewegung  →  transition_1 spielt
+ * einmal  →  britney_2 läuft im Loop  →  Bewegung  →  transition_2 …
+ * Nach der letzten Stufe (transition_N) geht es zurück auf britney_1.
  *
- * Anbindung des echten Sensors später: Ein kleines GPIO-Skript auf dem
- * Pi ruft bei jeder Sensor-Flanke  window.britney.motion()  auf.
- * Testen ohne Sensor: Leertaste drücken (oder britney.motion() in der Konsole).
+ * Ausgelöst wird eine Stufe durch:
+ *   • den PIR-Sensor am Pi  → die Shell sendet einen Leertasten-Druck
+ *     (sensor/bs412_motion.py), das löst denselben Weg aus wie der Test;
+ *   • die Leertaste          (lokaler Test ohne Sensor);
+ *   • britney.advance()      (in der Browser-Konsole).
+ *
+ * Technik: zwei gestapelte <video>. Der JEWEILS NÄCHSTE Clip wird schon
+ * gepuffert, während der aktuelle läuft — beim Umschalten ist er also bereits
+ * fertig geladen. Das verhindert das Ruckeln/„Bugs" beim Übergang.
  * ════════════════════════════════════════════════════════════════ */
 
-/* Zeiten aus der Config (mit Fallback), damit sie ohne Code-Änderung tunbar sind */
-const MOTION_TOTAL       = (cfg.motion && cfg.motion.count)      || 4;     /* nach so vielen Auslösungen zurück auf 0 */
-const MOTION_SHOW_MS     = (cfg.motion && cfg.motion.showMs)     || 2600;  /* wie lange das Symbol je Auslösung sichtbar bleibt */
-const MOTION_COOLDOWN_MS = (cfg.motion && cfg.motion.cooldownMs) || 5000;  /* Mindestpause zwischen zwei Auslösungen */
+const V = cfg.video;
+const clip = (name) => `${V.dir}/${name}.mp4`;
+const layers = [$('vidA'), $('vidB')];
+const hasVideo = !!layers[0];
 
-const motionEl = $('motion');
-const motionCountEl = $('motionCount');
-let motionCount = 0;
-let motionHideTimer = null;
-let motionLocked = false;
+let frontIdx = 0;
+let stage = V.startStage || 1;     /* aktueller Stand-Loop: britney_<stage> */
+let busy = false;                  /* true, während ein Übergang läuft */
+let cooldownUntil = 0;
 
-function triggerMotion() {
-  if (!motionEl || motionLocked) return;
-  motionLocked = true;
-  setTimeout(() => { motionLocked = false; }, MOTION_COOLDOWN_MS);
+const back = () => layers[frontIdx ^ 1];   /* versteckte Ebene (Puffer) */
+const front = () => layers[frontIdx];      /* sichtbare Ebene */
 
-  /* 1 → 2 → 3 → 4, danach wieder von vorn */
-  motionCount = motionCount >= MOTION_TOTAL ? 1 : motionCount + 1;
-  motionCountEl.textContent = String(motionCount);
-
-  motionEl.classList.add('is-active');
-  clearTimeout(motionHideTimer);
-  motionHideTimer = setTimeout(() => {
-    motionEl.classList.remove('is-active');
-    if (motionCount >= MOTION_TOTAL) motionCount = 0; /* Reset nach der 4. */
-  }, MOTION_SHOW_MS);
+if (hasVideo) {
+  layers.forEach((v) => { v.muted = V.muted !== false; v.preload = 'auto'; });
+  document.documentElement.style.setProperty('--britney-fade', `${V.crossfadeMs || 160}ms`);
 }
 
-/* Test-Auslöser ohne Sensor: Leertaste */
+/* Clip auf eine (versteckte) Ebene laden — nur puffern, nicht anzeigen.
+   Per dataset.clip wird ein erneutes Laden desselben Clips vermieden. */
+function preload(el, src) {
+  if (!el || el.dataset.clip === src) return;
+  el.dataset.clip = src;
+  el.src = src;
+  el.load();
+}
+
+/* Wartet, bis ein Element flüssig durchspielbereit ist (mit Sicherheits-Timeout,
+   falls canplaythrough mal nicht feuert). */
+function whenReady(el) {
+  return new Promise((resolve) => {
+    if (el.readyState >= 4) { resolve(); return; }   /* HAVE_ENOUGH_DATA */
+    let done = false;
+    const ok = () => {
+      if (done) return; done = true;
+      el.removeEventListener('canplaythrough', ok);
+      el.removeEventListener('canplay', ok);
+      clearTimeout(timer);
+      resolve();
+    };
+    el.addEventListener('canplaythrough', ok, { once: true });
+    el.addEventListener('canplay', ok, { once: true });   /* Fallback */
+    const timer = setTimeout(ok, 2500);                   /* Notbremse */
+  });
+}
+
+/* Wartet, bis das Element seinen ERSTEN Frame tatsächlich präsentiert hat. */
+function firstFrame(el) {
+  return new Promise((resolve) => {
+    let done = false;
+    const ok = () => { if (done) return; done = true; clearTimeout(timer); resolve(); };
+    if (el.requestVideoFrameCallback) {
+      el.requestVideoFrameCallback(() => ok());
+    } else {
+      requestAnimationFrame(() => requestAnimationFrame(ok));   /* Fallback */
+    }
+    const timer = setTimeout(ok, 250);   /* Notbremse, falls rVFC nicht feuert */
+  });
+}
+
+/* Wartet n Animations-Frames (Compositor-Takte). */
+function nextFrames(n) {
+  return new Promise((resolve) => {
+    let i = 0;
+    const step = () => { if (++i >= n) resolve(); else requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
+}
+
+/* Die (bereits gepufferte) hintere Ebene abspielen und nach vorn holen.
+
+   Kern gegen das Stale-Frame-Flackern: Die ON-SCREEN-Textur einer opacity:0-
+   Ebene wird nicht aktualisiert — beim Einblenden blitzt daher kurz ihr altes
+   Bild (= Endframe des vorigen Übergangs) auf. Lösung: die neue Ebene VOLL
+   deckend, aber HINTER die aktuelle legen (z-index). Die aktuelle verdeckt sie
+   mittig, sie ist fürs Auge unsichtbar, komponiert aber ihren Live-Frame. Dann
+   blenden wir nur die ALTE Ebene aus — die neue liegt schon live darunter. */
+async function reveal(loop) {
+  const b = back();
+  const f = front();
+  b.loop = loop;
+  b.onended = null;
+  await whenReady(b);
+  try { b.currentTime = 0; } catch (_) {}
+  try { await b.play(); } catch (_) {}   /* Autoplay-Reject schluckt sich harmlos */
+  await firstFrame(b);                    /* erster Frame ist dekodiert */
+
+  /* 1) Neue Ebene voll sichtbar, aber HINTER die alte → komponiert Live-Frame,
+        ohne dass man sie sieht (die alte deckt sie ab). */
+  b.style.transition = 'none';
+  b.style.opacity = '1';
+  b.style.zIndex = '1';
+  f.style.zIndex = '2';
+  await nextFrames(2);                    /* Textur der neuen Ebene ist jetzt live */
+
+  /* 2) Nur die ALTE Ebene ausblenden — die neue kommt live zum Vorschein. */
+  const fade = V.crossfadeMs || 0;
+  f.style.transition = fade > 0 ? `opacity ${fade}ms linear` : 'none';
+  f.style.opacity = '0';
+  b.classList.add('is-front');           /* nur zur Zustandsmarkierung */
+  f.classList.remove('is-front');
+  frontIdx ^= 1;
+
+  /* Erst zurückkehren, wenn die ALTE Ebene wirklich ausgeblendet (opacity 0)
+     und pausiert ist. Sonst lädt der Aufrufer den nächsten Clip per preload()
+     in genau diese Ebene, WÄHREND sie noch sichtbar ausblendet — ihr Bild
+     springt dann mitten im Fade auf den Startframe des nächsten Clips
+     (= das kurze »Aufblitzen« des nächsten Bildes beim Weiterschalten). */
+  await new Promise((resolve) => {
+    const cleanup = () => {
+      try { f.pause(); } catch (_) {}     /* nie zwei Clips gleichzeitig decodieren */
+      f.style.zIndex = '';
+      b.style.zIndex = '';
+      f.style.transition = '';
+      b.style.transition = '';
+      resolve();
+    };
+    if (fade > 0) setTimeout(cleanup, fade + 80); else cleanup();
+  });
+  return layers[frontIdx];   /* = b, jetzt vorne */
+}
+
+/* Eine Stufe weiterschalten: Übergang spielen, dann nächsten Stand-Loop.
+   Beide sind dank Vorab-Pufferung schon geladen → kein Ruckeln. */
+async function advance() {
+  if (!hasVideo || busy) return;
+  busy = true;
+  try {
+    preload(back(), clip(`transition_${stage}`));   /* i. d. R. schon vorbereitet */
+    const t = await reveal(false);                  /* Übergang einmal abspielen */
+
+    const nextStage = (stage % V.stages) + 1;
+    preload(back(), clip(`britney_${nextStage}`));  /* nächsten Loop puffern, während der Übergang läuft */
+    await new Promise((res) => { t.onended = res; });
+
+    stage = nextStage;
+    await reveal(true);                             /* nächster Stand-Loop */
+    preload(back(), clip(`transition_${stage}`));   /* schon den Folge-Übergang vorbereiten */
+  } finally {
+    busy = false;
+    cooldownUntil = Date.now() + (V.cooldownMs || 0);
+  }
+}
+
+/* Eine Bewegungs-Auslösung — entprellt, ignoriert Pulse während eines Übergangs */
+function triggerMotion() {
+  if (busy || Date.now() < cooldownUntil) return;
+  advance();
+}
+
+/* Test-Auslöser ohne Sensor: Leertaste (auch der Weg, den die Pi-Shell nutzt) */
 addEventListener('keydown', (e) => {
   if (e.code === 'Space') { e.preventDefault(); triggerMotion(); }
 });
 
-window.britney.motion = triggerMotion;
-
-/* Echte Sensor-Anbindung: pollt die lokale PIR-Bridge auf dem Pi.
-   Steigt der Zähler, kam eine neue Bewegung → Symbol einblenden.
-   Fehler (Bridge aus) werden still verschluckt — Dashboard läuft weiter. */
-if (cfg.motion && cfg.motion.url) {
-  let lastSeen = null;
-  const pollMotion = async () => {
-    try {
-      const res = await fetch(cfg.motion.url, { cache: 'no-store' });
-      const { count } = await res.json();
-      if (lastSeen === null) lastSeen = count;       /* beim Start nur synchronisieren */
-      else if (count > lastSeen) { lastSeen = count; triggerMotion(); }
-    } catch { /* Bridge nicht erreichbar → ignorieren */ }
-  };
-  setInterval(pollMotion, cfg.motion.pollMs || 300);
+/* Start: ersten Stand-Loop anzeigen, dann ersten Übergang + restliche Clips
+   im Hintergrund vorpuffern, damit jeder Wechsel sofort flüssig läuft. */
+async function startBritney() {
+  if (!hasVideo) return;
+  preload(back(), clip(`britney_${stage}`));
+  await reveal(true);
+  preload(back(), clip(`transition_${stage}`));
+  /* Cache aller übrigen Clips vorwärmen (Dateien sind cachebar ausgeliefert) */
+  setTimeout(() => {
+    for (let i = 1; i <= V.stages; i++) {
+      fetch(clip(`britney_${i}`)).catch(() => {});
+      fetch(clip(`transition_${i}`)).catch(() => {});
+    }
+  }, 1500);
 }
+startBritney();
+
+/* Öffentliche API erweitern */
+window.britney.motion  = triggerMotion;                       /* eine Bewegung (PIR/Shell/Test) */
+window.britney.advance = advance;                             /* sofort eine Stufe weiter */
+window.britney.stage   = () => stage;                         /* aktuelle Stufe abfragen */
+window.britney.reset   = async () => {                        /* zurück auf britney_1 */
+  stage = V.startStage || 1;
+  busy = false;
+  cooldownUntil = 0;
+  preload(back(), clip(`britney_${stage}`));
+  await reveal(true);
+  preload(back(), clip(`transition_${stage}`));
+};
 
 /* ════════════════════════════════════════════════════════════════
  * 4 · KIOSK-ROBUSTHEIT

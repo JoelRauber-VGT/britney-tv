@@ -24,6 +24,21 @@ const CONFIG = {
     target:  130,  /* Das Projektziel */
   },
 
+  /* Mitte-Videos: Britney-Avatar.
+   * Stand-Loop  britney_N  läuft endlos. Bei Bewegung spielt  transition_N
+   * einmal und blendet zu  britney_(N+1). Nach der letzten Stufe geht es
+   * zurück auf britney_1. Eine Stufe wird ausgelöst durch PIR-Sensor,
+   * Leertaste (lokaler Test) oder britney.advance() in der Konsole. */
+  video: {
+    dir: './vidoes',     /* Ordner mit britney_1..N.mp4 und transition_1..N.mp4 */
+    stages: 4,           /* Anzahl Stand-Loops (britney_1 … britney_4) */
+    startStage: 1,       /* womit gestartet wird */
+    muted: true,         /* Kiosk läuft lautlos (muted erlaubt den Autostart) */
+    crossfadeMs: 130,    /* kurze Überblendung — verdeckt den Stale-Frame beim Wechsel.
+                            0 = harter Schnitt (blitzt evtl. 1 Frame), höher = weicher */
+    cooldownMs: 1000,    /* entprellt schnelle PIR-Doppelpulse */
+  },
+
   /* Mittel-Visualisierung: Forschungskooperation VGT × FHNW.
    * Texte hier zentral änderbar. Der von »…« umschlossene Teil wird fett
    * gesetzt — die Anführungszeichen selbst werden NICHT angezeigt. */
@@ -35,20 +50,5 @@ const CONFIG = {
     /* Täglicher Auto-Reload (Stunde 0–23) gegen Browser-Memory-Drift
      * im Dauerbetrieb. -1 = aus. */
     dailyReloadHour: 4,
-  },
-
-  /* Bewegungs-Trigger über den BS412-PIR-Sensor.
-   * Das Bridge-Skript (sensor/motion_bridge.py) liest GPIO4 und stellt
-   * einen Zähler unter dieser lokalen Adresse bereit. Das Dashboard pollt
-   * sie; läuft die Bridge nicht, bleibt alles still (Leertaste geht weiter).
-   * url: '' schaltet das Pollen komplett aus. */
-  motion: {
-    url: 'http://127.0.0.1:8765/motion',
-    pollMs: 300,
-
-    /* Verhalten des Symbols bei Bewegung: */
-    count:      4,     /* nach so vielen Auslösungen springt der Zähler zurück auf 0 */
-    showMs:     2600,  /* wie lange das Symbol je Auslösung sichtbar bleibt (ms) */
-    cooldownMs: 5000,  /* Mindestpause zwischen zwei Auslösungen (ms) — verhindert zu schnelles Triggern */
   },
 };
