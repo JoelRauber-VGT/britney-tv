@@ -5,7 +5,7 @@
  * IQ hochsetzen → iq.current ändern, Seite neu laden. Fertig.
  * ════════════════════════════════════════════════════════════════ */
 
-export const CONFIG = {
+const CONFIG = {
 
   project: {
     label: 'VGT · Forschungsprojekt Britney',
@@ -26,27 +26,7 @@ export const CONFIG = {
   /* Mittel-Visualisierung: Forschungskooperation VGT × FHNW.
    * Texte hier zentral änderbar. */
   collab: {
-    eyebrow: 'Forschungskooperation',
     caption: 'Gemeinsames KI-Forschungsprojekt »Britney«',
-  },
-
-  /* Interaktive Visualisierung: ein Roboterarm, der per Reinforcement
-   * Learning (Evolution Strategies) live lernt, ein Ziel zu greifen. */
-  robot: {
-    enabled: true,
-    /* Koppelt die IQ-Anzeige an die Lern-Leistung des Arms:
-     *   true  = IQ steigt live mit, je besser der Arm trifft (empfohlen)
-     *   false = IQ bleibt manuell (britney.setIQ) */
-    driveIQ: true,
-    /* Live-Lernstatus (Generation/Treffer) in die Status-Zeile schreiben */
-    showStatus: true,
-    /* Hybrid (Standard): mit eingebackenen, vortrainierten Gewichten starten
-     * → Arm ist sofort kompetent und lernt im Browser nur noch weiter.
-     * false = von Null lernen (man sieht den ganzen Lernbogen). */
-    startTrained: true,
-    /* Eigene Gewichte überschreiben den Standard. Leer = eingebackene nutzen.
-     * Erzeugen: in der Konsole  britney.robot.dumpWeights()  → nach rl/pretrained.js */
-    pretrained: null,
   },
 
   kiosk: {

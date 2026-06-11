@@ -1,5 +1,5 @@
 /* Britney Dashboard · 75" Hochformat-Kiosk · Raspberry Pi 4
- * Schichten: Blooms (CSS) → 3D-Canvas (transparent) → Scrims → HUD-Text
+ * Schichten: Blooms (CSS) → Logo-Bühne → HUD-Text
  */
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -38,7 +38,7 @@ body {
   pointer-events: none;
 }
 
-/* ── Mitte: Roboter-Bühne + Forschungskooperation VGT × FHNW ── */
+/* ── Mitte: Forschungskooperation VGT × FHNW (vertikal zentriert) ── */
 .stage {
   position: fixed;
   inset: 0;
@@ -46,50 +46,13 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  gap: clamp(1rem, 2.4vh, 2.4rem);
+  justify-content: center;     /* Logos sitzen mittig auf der Bühne */
+  gap: clamp(1.5rem, 4vh, 4rem);
   /* hält Abstand zu Countdown (oben) und IQ-Banner (unten) */
-  padding: 21vh 5vw 29vh;
+  padding: 24vh 5vw 26vh;
   text-align: center;
   pointer-events: none;
 }
-
-/* Der Roboter ist der Held: füllt die freie Mitte, Logos sitzen darunter.
-   Der WebGL-Renderer skaliert auf clientWidth/Height genau dieser Box. */
-.stage__canvas {
-  flex: 1 1 auto;
-  width: 100%;
-  min-height: 0;          /* erlaubt Schrumpfen im Spalten-Flex */
-  display: block;
-}
-
-/* Live-Lernstatus (Generation / Treffer) — dezent über den Logos */
-.stage__status {
-  margin: 0;
-  min-height: 1.4em;
-  font-family: var(--font-mono);
-  font-size: var(--text-label);
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  color: var(--color-accent);
-  opacity: 0;
-  transition: opacity var(--dur-long) var(--ease-out);
-}
-
-.stage__eyebrow {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--text-label);
-  font-weight: 500;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-}
-
-/* kompaktere Logos, damit der Roboter die Bühne dominiert */
-.stage .collab__logo { max-width: 22vw; padding: clamp(0.7rem, 1.6vw, 1.5rem); }
-.stage .collab__x    { font-size: clamp(2rem, 6vw, 5rem); }
-.stage .stage__caption { font-size: var(--text-label); }
 
 /* Die beiden Logos horizontal nebeneinander, × in der Mitte */
 .collab {
@@ -300,23 +263,6 @@ body {
   color: var(--color-accent);
   font-weight: 600;
 }
-
-/* ── Status (Laden / Fehler) ── */
-.status {
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  z-index: var(--z-raised);
-  transform: translate(-50%, -50%);
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--text-label);
-  letter-spacing: 0.1em;
-  color: var(--color-muted);
-  text-align: center;
-  max-width: 36ch;
-}
-.status:empty { display: none; }
 
 /* ── Ein orchestrierter Seitenaufbau, sonst nichts ── */
 .reveal {

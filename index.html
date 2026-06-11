@@ -6,9 +6,6 @@
   <title>Britney · Forschungsprojekt</title>
   <link rel="stylesheet" href="./tokens.css">
   <link rel="stylesheet" href="./style.css">
-  <script type="importmap">
-    { "imports": { "three": "./vendor/three.module.min.js" } }
-  </script>
 </head>
 <body>
 
@@ -49,13 +46,8 @@
     </div>
   </header>
 
-  <!-- Mitte: Roboter-Bühne (live lernendes RL) + Forschungskooperation -->
+  <!-- Mitte: Forschungskooperation VGT × FHNW -->
   <main class="stage reveal" style="--i: 1">
-    <canvas id="stage" class="stage__canvas"
-            aria-label="Roboterarm, der per Reinforcement Learning live lernt, ein Ziel zu greifen"></canvas>
-
-    <p class="stage__status" id="status"></p>
-
     <div class="collab" aria-label="Forschungskooperation VGT und FHNW">
       <figure class="collab__logo collab__logo--vgt">
         <img src="./vgt.png" alt="VGT">
@@ -84,7 +76,8 @@
     </div>
   </footer>
 
-  <script type="module" src="./app.js"></script>
+  <script src="./config.js"></script>
+  <script src="./app.js"></script>
 
 </body>
 </html>

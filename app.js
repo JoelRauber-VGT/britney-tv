@@ -3,13 +3,13 @@
  *
  * Reines Daten-Dashboard für den 75″-Hochformat-Kiosk (1080×1920):
  *  - Oben   · Projekt-Countdown
- *  - Mitte  · Forschungskooperation VGT × FHNW (statisch, in HTML)
+ *  - Mitte  · Forschungskooperation VGT × FHNW (Logos, statisch)
  *  - Unten  · IQ-Stand (vom Team über die Laufzeit hochgesetzt)
  *
  * Live-Änderung ohne Reload möglich:  britney.setIQ(85)
+ * (CONFIG kommt aus config.js — als klassisches Script davor geladen,
+ *  damit die Seite ohne Webserver direkt über file:// läuft.)
  * ════════════════════════════════════════════════════════════════ */
-
-import { CONFIG } from './config.js';
 
 const cfg = CONFIG;
 const $ = (id) => document.getElementById(id);
@@ -21,7 +21,6 @@ if (phaseEl) {
   phaseEl.textContent = cfg.project.phase;
   if (!cfg.project.phase) phaseEl.remove();
 }
-if ($('eyebrow')) $('eyebrow').textContent = cfg.collab.eyebrow;
 if ($('caption')) $('caption').innerHTML = cfg.collab.caption.replace(
   /»(.+?)«/, '<strong>»$1«</strong>');
 
@@ -86,66 +85,16 @@ function showIQ(value, animate = true) {
     if (p < 1) requestAnimationFrame(step);
   })(t0);
 }
-/* Direktes Setzen ohne Hochzähl-Animation — für die Live-Updates des Roboters */
-function paintIQ(value) {
-  const el = $('iqValue');
-  const frac = Math.min(Math.max((value - cfg.iq.start) / (cfg.iq.target - cfg.iq.start), 0), 1);
-  el.textContent = String(Math.round(value));
-  $('iqFill').style.transform = `scaleX(${frac})`;
-  $('iqDot').style.left = `${frac * 100}%`;
-}
 
 $('iqStart').textContent = String(cfg.iq.start);
 $('iqTarget').textContent = String(cfg.iq.target);
 
-/* Treibt der Roboter den IQ? Dann übernimmt er die Anzeige ab dem ersten
-   Lern-Update — die Hochzähl-Animation würde damit kollidieren. */
-const robotDrivesIQ = !!(cfg.robot && cfg.robot.enabled && cfg.robot.driveIQ && !reducedMotion);
-if (robotDrivesIQ) paintIQ(cfg.iq.start);                 // Platzhalter bis zum 1. Stat
-else setTimeout(() => showIQ(cfg.iq.current), 600);
+setTimeout(() => showIQ(cfg.iq.current), 600);
 
 /* Öffentliche API — IQ live ändern, ohne Reload:  britney.setIQ(85) */
 window.britney = {
   setIQ: (v) => { cfg.iq.current = v; showIQ(v); },
 };
-
-/* ════════════════════════════════════════════════════════════════
- * 2b · ROBOTER · live lernende RL-Visualisierung
- * ════════════════════════════════════════════════════════════════ */
-
-if (cfg.robot && cfg.robot.enabled && !reducedMotion) {
-  const statusEl = $('status');
-  Promise.all([import('./rl/index.js'), import('./rl/pretrained.js')])
-    .then(([{ startRobot }, { PRETRAINED }]) => {
-      // Eigene Gewichte > eingebackene (Hybrid) > von Null lernen
-      const pretrained = cfg.robot.pretrained || (cfg.robot.startTrained ? PRETRAINED : null);
-
-      const robot = startRobot({
-        canvas: $('stage'),
-        pretrained,
-        onStats: (s) => {
-          if (robotDrivesIQ) {
-            const iq = cfg.iq.start + (cfg.iq.target - cfg.iq.start) * s.perf;
-            paintIQ(iq);
-            cfg.iq.current = Math.round(iq);
-          }
-          if (cfg.robot.showStatus && statusEl) {
-            statusEl.textContent =
-              `Britney lernt · Generation ${s.gen} · Ø ${s.hitsAvg.toFixed(1)} Treffer/Episode`;
-            statusEl.style.opacity = '1';
-          }
-        },
-      });
-      window.britney.robot = robot;   // britney.robot.dumpWeights() in der Konsole
-    })
-    .catch((err) => {
-      if (statusEl) statusEl.textContent = 'Roboter konnte nicht geladen werden.';
-      console.error('[britney] Roboter-Start fehlgeschlagen:', err);
-    });
-} else {
-  const s = $('status');
-  if (s) s.remove();
-}
 
 /* ════════════════════════════════════════════════════════════════
  * 3 · KIOSK-ROBUSTHEIT
