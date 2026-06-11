@@ -23,6 +23,7 @@ import os
 import shutil
 import sys
 import threading
+import time
 import webbrowser
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -31,8 +32,14 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 # serve.py liest den Sensor selbst und zaehlt jede Bewegung hoch. Die Seite
 # pollt /motion (gleicher Origin -> kein CORS, kein xdotool/Wayland-Problem).
 # Werte aus sensor/bs412_test.py: aktiv-high, interner Pull-down.
+#
+# WICHTIG: Gelesen wird per POLLING (sensor.value in einer Schleife) - exakt
+# wie der bewaehrte Hardware-Test sensor/bs412_test.py. Der frueher genutzte
+# Event-Callback (when_activated) feuert auf dem Pi (gpiozero/lgpio) nicht
+# zuverlaessig; das Polling hat dagegen nachweislich funktioniert.
 MOTION_PIN = 4
 MOTION_PULL_UP = False
+MOTION_POLL_S = 0.02      # 20 ms - wie im Hardware-Test
 _motion_count = 0
 _motion_lock = threading.Lock()
 _sensor = None            # haelt das Sensor-Objekt am Leben (sonst GC)
@@ -44,6 +51,19 @@ def _bump_motion():
         _motion_count += 1
         n = _motion_count
     print(f"Bewegung #{n}", flush=True)
+
+
+def _poll_motion_loop():
+    """Liest den Sensor in einer Schleife und zaehlt jede steigende Flanke
+    (low -> high = Bewegungsbeginn) als eine Bewegung hoch. Laeuft im
+    Hintergrund-Thread, damit der Webserver normal weiterservt."""
+    last = None
+    while True:
+        v = bool(_sensor.value)
+        if last is False and v is True:   # steigende Flanke = neue Bewegung
+            _bump_motion()
+        last = v
+        time.sleep(MOTION_POLL_S)
 
 
 def start_motion_sensor():
@@ -60,8 +80,8 @@ def start_motion_sensor():
     except Exception as e:
         print(f"PIR-Sensor an GPIO{MOTION_PIN} nicht verfuegbar: {e}", flush=True)
         return
-    _sensor.when_activated = _bump_motion
-    print(f"PIR-Sensor aktiv: GPIO{MOTION_PIN} -> /motion", flush=True)
+    threading.Thread(target=_poll_motion_loop, daemon=True).start()
+    print(f"PIR-Sensor aktiv (Polling): GPIO{MOTION_PIN} -> /motion", flush=True)
 
 # .woff2 / .mjs / .mp4 sauber ausliefern (aelteren Python-Versionen fehlt das teils)
 EXTRA_TYPES = {

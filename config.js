@@ -36,7 +36,9 @@ const CONFIG = {
     muted: true,         /* Kiosk läuft lautlos (muted erlaubt den Autostart) */
     crossfadeMs: 130,    /* kurze Überblendung — verdeckt den Stale-Frame beim Wechsel.
                             0 = harter Schnitt (blitzt evtl. 1 Frame), höher = weicher */
-    cooldownMs: 1000,    /* entprellt schnelle PIR-Doppelpulse */
+    cooldownMs: 5000,    /* Sperre nach einem Auslöser: 5 s lang werden weitere
+                            Bewegungen ignoriert (jemand laeuft durch + wackelt
+                            gleich nochmal -> nur EIN Wechsel). 0 = keine Sperre */
   },
 
   /* Mittel-Visualisierung: Forschungskooperation VGT × FHNW.

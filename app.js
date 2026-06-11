@@ -128,8 +128,8 @@ window.britney = {
  * Nach der letzten Stufe (transition_N) geht es zurück auf britney_1.
  *
  * Ausgelöst wird eine Stufe durch:
- *   • den PIR-Sensor am Pi  → die Shell sendet einen Leertasten-Druck
- *     (sensor/bs412_motion.py), das löst denselben Weg aus wie der Test;
+ *   • den PIR-Sensor am Pi  → serve.py zählt /motion hoch, die Seite pollt das
+ *     und löst denselben Weg aus wie die Leertaste (s. Abschnitt unten);
  *   • die Leertaste          (lokaler Test ohne Sensor);
  *   • britney.advance()      (in der Browser-Konsole).
  *
