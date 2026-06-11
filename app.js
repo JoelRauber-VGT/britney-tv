@@ -323,6 +323,22 @@ window.britney.reset   = async () => {                        /* zurück auf bri
   preload(back(), clip(`transition_${stage}`));
 };
 
+/* Echte Sensor-Anbindung: pollt die lokale PIR-Bridge auf dem Pi.
+   Steigt der Zähler, kam eine neue Bewegung → Symbol einblenden.
+   Fehler (Bridge aus) werden still verschluckt — Dashboard läuft weiter. */
+if (cfg.motion && cfg.motion.url) {
+  let lastSeen = null;
+  const pollMotion = async () => {
+    try {
+      const res = await fetch(cfg.motion.url, { cache: 'no-store' });
+      const { count } = await res.json();
+      if (lastSeen === null) lastSeen = count;       /* beim Start nur synchronisieren */
+      else if (count > lastSeen) { lastSeen = count; triggerMotion(); }
+    } catch { /* Bridge nicht erreichbar → ignorieren */ }
+  };
+  setInterval(pollMotion, cfg.motion.pollMs || 300);
+}
+
 /* ════════════════════════════════════════════════════════════════
  * 4 · KIOSK-ROBUSTHEIT
  * ════════════════════════════════════════════════════════════════ */
