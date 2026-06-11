@@ -45,5 +45,10 @@ const CONFIG = {
   motion: {
     url: 'http://127.0.0.1:8765/motion',
     pollMs: 300,
+
+    /* Verhalten des Symbols bei Bewegung: */
+    count:      4,     /* nach so vielen Auslösungen springt der Zähler zurück auf 0 */
+    showMs:     2600,  /* wie lange das Symbol je Auslösung sichtbar bleibt (ms) */
+    cooldownMs: 5000,  /* Mindestpause zwischen zwei Auslösungen (ms) — verhindert zu schnelles Triggern */
   },
 };

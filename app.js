@@ -132,9 +132,10 @@ window.britney = {
  * Testen ohne Sensor: Leertaste drücken (oder britney.motion() in der Konsole).
  * ════════════════════════════════════════════════════════════════ */
 
-const MOTION_TOTAL       = 4;     /* nach so vielen Auslösungen zurück auf 0 */
-const MOTION_SHOW_MS     = 2600;  /* wie lange das Symbol je Auslösung sichtbar bleibt */
-const MOTION_COOLDOWN_MS = 600;   /* entprellt schnelle PIR-Doppelpulse */
+/* Zeiten aus der Config (mit Fallback), damit sie ohne Code-Änderung tunbar sind */
+const MOTION_TOTAL       = (cfg.motion && cfg.motion.count)      || 4;     /* nach so vielen Auslösungen zurück auf 0 */
+const MOTION_SHOW_MS     = (cfg.motion && cfg.motion.showMs)     || 2600;  /* wie lange das Symbol je Auslösung sichtbar bleibt */
+const MOTION_COOLDOWN_MS = (cfg.motion && cfg.motion.cooldownMs) || 5000;  /* Mindestpause zwischen zwei Auslösungen */
 
 const motionEl = $('motion');
 const motionCountEl = $('motionCount');
