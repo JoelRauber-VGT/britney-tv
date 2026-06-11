@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Britney · Forschungsprojekt</title>
+  <link rel="stylesheet" href="./tokens.css">
+  <link rel="stylesheet" href="./style.css">
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js" } }
+  </script>
+</head>
+<body>
+
+  <div class="bloom" aria-hidden="true"></div>
+
+  <!-- Oben: Projekt + Countdown -->
+  <header class="hud hud--top reveal" style="--i: 0">
+    <div class="masthead">
+      <p class="label"><span class="label__mark" aria-hidden="true"></span>VGT · Forschungsprojekt Britney</p>
+      <p class="phase" id="phase"></p>
+    </div>
+
+    <div class="count" role="timer" aria-label="Verbleibende Projektzeit">
+      <div class="count__group">
+        <span class="count__value" id="cd">–</span>
+        <span class="count__unit">Tage</span>
+      </div>
+      <span class="count__sep" aria-hidden="true">:</span>
+      <div class="count__group">
+        <span class="count__value" id="ch">––</span>
+        <span class="count__unit">Std</span>
+      </div>
+      <span class="count__sep" aria-hidden="true">:</span>
+      <div class="count__group">
+        <span class="count__value" id="cm">––</span>
+        <span class="count__unit">Min</span>
+      </div>
+      <span class="count__sep" aria-hidden="true">:</span>
+      <div class="count__group">
+        <span class="count__value" id="cs">––</span>
+        <span class="count__unit">Sek</span>
+      </div>
+    </div>
+
+    <div class="meta">
+      <p class="meta__dates" id="dates"></p>
+      <div class="track" aria-hidden="true"><div class="track__fill" id="projFill"></div></div>
+    </div>
+  </header>
+
+  <!-- Mitte: Roboter-Bühne (live lernendes RL) + Forschungskooperation -->
+  <main class="stage reveal" style="--i: 1">
+    <canvas id="stage" class="stage__canvas"
+            aria-label="Roboterarm, der per Reinforcement Learning live lernt, ein Ziel zu greifen"></canvas>
+
+    <p class="stage__status" id="status"></p>
+
+    <div class="collab" aria-label="Forschungskooperation VGT und FHNW">
+      <figure class="collab__logo collab__logo--vgt">
+        <img src="./vgt.png" alt="VGT">
+      </figure>
+      <span class="collab__x" aria-hidden="true">×</span>
+      <figure class="collab__logo collab__logo--fhnw">
+        <img src="./fhnw.jpg" alt="FHNW – Fachhochschule Nordwestschweiz">
+      </figure>
+    </div>
+
+    <p class="stage__caption" id="caption">Gemeinsames KI-Forschungsprojekt <strong>»Britney«</strong></p>
+  </main>
+
+  <!-- Unten: IQ-Stand -->
+  <footer class="hud hud--bottom reveal" style="--i: 2">
+    <div class="iq">
+      <div class="iq__figure" id="iqValue" aria-label="Aktueller IQ">–</div>
+      <div class="iq__meta">
+        <p class="label">Aktueller IQ</p>
+        <p class="iq__range">Start <span id="iqStart">–</span> · Ziel <span class="hl" id="iqTarget">–</span></p>
+        <div class="track" aria-hidden="true">
+          <div class="track__fill" id="iqFill"></div>
+          <div class="track__dot" id="iqDot"></div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="./app.js"></script>
+
+</body>
+</html>

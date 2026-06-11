@@ -1,0 +1,78 @@
+/* Hallmark · pre-emit critique: P5 H4 E5 S4 R5 V5 */
+/* Hallmark · macrostructure: Stat-Led (Kiosk-Adaption, single viewport) · kein Nav/Footer (Kiosk)
+ * theme: custom · vibe: "Nachtlabor, violett, Signal-Orange" · paper: oklch(13% 0.018 305) · accent: oklch(74% 0.17 55)
+ * display: Geist Mono 600 (Daten-Display: Countdown, IQ, Labels) · body: Geist 400 · axes: dark / mono / warm
+ * contrast: pass (46–50) · nav: none (Kiosk) · footer: none (Kiosk) · slop: pass (51–55)
+ * honest: pass (56) · chrome: pass (57) · tokens: pass (58) · responsive: pass (59) · icons: pass (60) · mobile: pass (36, 59, 61–69)
+ * studied: no · context: user-provided · genre: atmospheric · enrichment: interactive WebGL bust + 2 blooms
+ */
+
+/* ── Schriften (lokal, kein CDN — Kiosk muss offline-fest sein) ── */
+@font-face {
+  font-family: "Geist";
+  src: url("./vendor/fonts/geist-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("./vendor/fonts/geist-mono-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  /* ── Farbe · dunkles Violett-Papier, Signal-Orange als einziger Akzent ── */
+  --color-paper:    oklch(13% 0.018 305);
+  --color-paper-2:  oklch(17% 0.020 305);
+  --color-paper-3:  oklch(22% 0.022 305);
+  --color-ink:      oklch(93% 0.010 305);
+  --color-ink-2:    oklch(74% 0.014 305);
+  --color-muted:    oklch(63% 0.018 305);
+  --color-rule:     oklch(30% 0.022 305);
+  --color-rule-2:   oklch(24% 0.020 305);
+  --color-accent:   oklch(74% 0.170 55);   /* Signal-Orange — sparsam */
+  --color-accent-2: oklch(72% 0.130 300);  /* Violett — Sekundärakzent (Tracks) */
+  --color-focus:    oklch(78% 0.200 55);
+
+  /* Bloom-Farben (transparente Verläufe hinter dem Canvas) */
+  --color-bloom-violet: oklch(40% 0.13 300 / 0.34);
+  --color-bloom-orange: oklch(55% 0.15 55 / 0.16);
+
+  /* ── Typografie ── */
+  --font-display: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-body:    "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    "Geist Mono", ui-monospace, monospace;
+
+  /* Größen in vw — skaliert identisch auf 1080×1920 und 2160×3840 */
+  --text-label:     clamp(0.9rem, 1.9vw, 2.6rem);
+  --text-qualifier: clamp(1rem, 2.2vw, 3rem);
+  --text-count:     clamp(3.4rem, 11.4vw, 16rem);
+  --text-unit:      clamp(0.8rem, 1.6vw, 2.2rem);
+  --text-iq:        clamp(7rem, 24vw, 34rem);
+
+  /* ── Raum · 4-pt-Skala ── */
+  --space-2xs: 0.25rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.75rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2.5rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+
+  /* ── Bewegung ── */
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:     cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+  --dur-long:  420ms;
+
+  /* ── Ebenen ── */
+  --z-base:   1;
+  --z-raised: 10;
+
+  /* ── Linien ── */
+  --rule-hairline: 1px solid var(--color-rule);
+}

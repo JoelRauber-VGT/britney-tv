@@ -1,0 +1,340 @@
+/* Britney Dashboard · 75" Hochformat-Kiosk · Raspberry Pi 4
+ * Schichten: Blooms (CSS) → 3D-Canvas (transparent) → Scrims → HUD-Text
+ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { overflow: clip; }
+body { overflow: clip; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-weight: 350; /* dunkler Grund → optisch leichter setzen */
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* ── Atmosphäre: zwei statische Blooms hinter dem Canvas ── */
+.bloom {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(42% 26% at 22% 24%, var(--color-bloom-violet), transparent 70%),
+    radial-gradient(38% 22% at 82% 78%, var(--color-bloom-orange), transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Mitte: Roboter-Bühne + Forschungskooperation VGT × FHNW ── */
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-base);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: clamp(1rem, 2.4vh, 2.4rem);
+  /* hält Abstand zu Countdown (oben) und IQ-Banner (unten) */
+  padding: 21vh 5vw 29vh;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Der Roboter ist der Held: füllt die freie Mitte, Logos sitzen darunter.
+   Der WebGL-Renderer skaliert auf clientWidth/Height genau dieser Box. */
+.stage__canvas {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;          /* erlaubt Schrumpfen im Spalten-Flex */
+  display: block;
+}
+
+/* Live-Lernstatus (Generation / Treffer) — dezent über den Logos */
+.stage__status {
+  margin: 0;
+  min-height: 1.4em;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--color-accent);
+  opacity: 0;
+  transition: opacity var(--dur-long) var(--ease-out);
+}
+
+.stage__eyebrow {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+/* kompaktere Logos, damit der Roboter die Bühne dominiert */
+.stage .collab__logo { max-width: 22vw; padding: clamp(0.7rem, 1.6vw, 1.5rem); }
+.stage .collab__x    { font-size: clamp(2rem, 6vw, 5rem); }
+.stage .stage__caption { font-size: var(--text-label); }
+
+/* Die beiden Logos horizontal nebeneinander, × in der Mitte */
+.collab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1.25rem, 4vw, 4rem);
+  width: 100%;
+}
+
+.collab__logo {
+  margin: 0;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 38vw;
+  aspect-ratio: 16 / 10;       /* beide Plättchen exakt gleich groß */
+  overflow: hidden;            /* Skalierung sauber an der Rundung beschneiden */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.2rem, 3vw, 3rem);
+  background: #fff;
+  border-radius: clamp(14px, 1.8vw, 30px);
+  box-shadow:
+    0 0 0 1px var(--color-rule),
+    0 1.6vh 6vh oklch(0% 0 0 / 0.45),
+    0 0 9vh oklch(74% 0.17 55 / 0.10);   /* feiner Orange-Schein */
+}
+.collab__logo--fhnw { background: oklch(96% 0.004 305); } /* passt zum hellgrauen JPG */
+
+.collab__logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* gleicht den unterschiedlichen Eigen-Weißraum der Quelldateien aus,
+   * damit beide Marken optisch gleich hoch erscheinen */
+  transform: scale(var(--logo-scale, 1));
+}
+.collab__logo--vgt  img { --logo-scale: 1.02; }
+.collab__logo--fhnw img { --logo-scale: 1.34; }
+
+/* Das verbindende × — Signal-Orange mit Glow, leichtes Pulsieren */
+.collab__x {
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(3rem, 10vw, 10rem);
+  line-height: 1;
+  color: var(--color-accent);
+  text-shadow: 0 0 4vh oklch(74% 0.17 55 / 0.55);
+  animation: x-pulse 3.4s var(--ease-in-out) infinite;
+}
+@keyframes x-pulse {
+  0%, 100% { transform: scale(1);    opacity: 0.9; }
+  50%      { transform: scale(1.12); opacity: 1;   }
+}
+
+.stage__caption {
+  margin: 0;
+  max-width: 40ch;
+  font-size: var(--text-qualifier);
+  color: var(--color-ink-2);
+}
+.stage__caption strong { color: var(--color-ink); font-weight: 600; }
+
+/* ── HUD ── */
+.hud {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: var(--z-raised);
+  padding-inline: 5vw;
+  pointer-events: none; /* Maus geht durch zum Canvas */
+}
+.hud--top    { top: 3.4vh; }
+.hud--bottom { bottom: 3.2vh; }
+
+/* Kopfzeile: Projektlabel links, Phase rechts — bewusst asymmetrisch */
+.masthead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding-bottom: var(--space-sm);
+  border-bottom: var(--rule-hairline);
+}
+
+.label {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-2);
+}
+.label__mark {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-right: 0.7em;
+  background: var(--color-accent);
+}
+
+.phase {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: calc(var(--text-label) * 0.82);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/* Countdown — die große Zahl oben, linksbündig */
+.count {
+  display: flex;
+  align-items: baseline;
+  gap: 0.06em;
+  margin-top: var(--space-lg);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.count__group { display: flex; flex-direction: column; }
+.count__value {
+  font-size: var(--text-count);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.count__unit {
+  margin-top: var(--space-xs);
+  font-size: var(--text-unit);
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.count__sep {
+  font-size: var(--text-count);
+  font-weight: 300;
+  line-height: 1;
+  color: var(--color-rule);
+  transform: translateY(-0.06em);
+}
+
+.meta { margin-top: var(--space-lg); max-width: 64ch; }
+.meta__dates {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--text-qualifier);
+  color: var(--color-ink-2);
+}
+.meta__dates strong {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+/* Fortschritts-Hairline (Projekt + IQ) */
+.track {
+  position: relative;
+  height: 2px;
+  background: var(--color-rule-2);
+}
+.track__fill {
+  position: absolute;
+  inset: 0;
+  background: var(--color-accent-2);
+  transform: scaleX(0);             /* skaliert statt width — GPU-freundlich */
+  transform-origin: left;
+}
+.track__dot {
+  position: absolute;
+  top: 50%;
+  left: 0%;                          /* wird von JS im IQ-Zähler mitgeführt */
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  background: var(--color-accent);
+  border-radius: 50%;
+}
+
+/* ── IQ-Stat unten: Riesenzahl links, Meta rechts daneben ── */
+.iq {
+  display: flex;
+  align-items: flex-end;
+  gap: 4.5vw;
+  padding-top: var(--space-sm);
+  border-top: var(--rule-hairline);
+}
+.iq__figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-iq);
+  font-weight: 600;
+  line-height: 0.86;
+  letter-spacing: -0.05em;
+}
+.iq__meta {
+  flex: 1;
+  padding-bottom: 0.5vw;
+  min-width: 0;
+}
+.iq__range {
+  margin: var(--space-sm) 0 var(--space-md);
+  font-size: var(--text-qualifier);
+  color: var(--color-ink-2);
+}
+.iq__range .hl {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* ── Status (Laden / Fehler) ── */
+.status {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: var(--z-raised);
+  transform: translate(-50%, -50%);
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: 0.1em;
+  color: var(--color-muted);
+  text-align: center;
+  max-width: 36ch;
+}
+.status:empty { display: none; }
+
+/* ── Ein orchestrierter Seitenaufbau, sonst nichts ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: reveal var(--dur-long) var(--ease-out) forwards;
+  animation-delay: calc(var(--i, 0) * 140ms);
+}
+@keyframes reveal {
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 150ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 150ms !important;
+  }
+  .reveal { animation: reveal-reduced 150ms linear forwards; }
+  @keyframes reveal-reduced { to { opacity: 1; transform: none; } }
+}
