@@ -382,14 +382,23 @@ if (cfg.motion && cfg.motion.url) {
       'font:14px/1.4 monospace;color:#0f0;background:rgba(0,0,0,.8);' +
       'padding:8px 10px;white-space:pre;pointer-events:none;border-radius:6px';
     document.body.appendChild(dbg);
+    const clipName = (el) => (el && el.dataset.clip ? el.dataset.clip.split('/').pop() : '-');
+    const vidLine = (el, tag) => {
+      if (!el) return `${tag}: -`;
+      const ct = el.currentTime ? el.currentTime.toFixed(1) : '0.0';
+      const dur = el.duration && isFinite(el.duration) ? el.duration.toFixed(1) : '?';
+      const err = el.error ? `ERR${el.error.code}` : 'ok';
+      return `${tag} ${clipName(el)} rs=${el.readyState} ${el.paused ? 'PAUSE' : 'play'} ` +
+             `t=${ct}/${dur} ${err}`;
+    };
     setInterval(() => {
       dbg.textContent =
         `server count : ${dbgCount}\n` +
         `lastSeen     : ${lastSeen}\n` +
-        `stage        : ${stage}\n` +
-        `busy         : ${busy}\n` +
+        `stage        : ${stage}   busy=${busy}   front=${frontIdx}\n` +
         `cooldown(ms) : ${Math.max(0, cooldownUntil - Date.now())}\n` +
-        `hasVideo     : ${hasVideo}`;
+        vidLine(layers[0], 'A') + '\n' +
+        vidLine(layers[1], 'B');
     }, 150);
   }
 }
