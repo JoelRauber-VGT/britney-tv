@@ -17,7 +17,7 @@ body {
   color: var(--color-ink);
   font-family: var(--font-body);
   font-weight: 350; /* dunkler Grund → optisch leichter setzen */
-  cursor: default;
+  cursor: none;
   user-select: none;
   -webkit-user-select: none;
 }
