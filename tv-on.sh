@@ -8,11 +8,8 @@ export WAYLAND_DISPLAY=wayland-1
 cec-ctl -d /dev/cec0 --playback
 cec-ctl -d /dev/cec0 --to 0 --image-view-on
 
-# Auf richtigen HDMI-Eingang umschalten (physische Adresse des Pi)
-sleep 2
+# Warten bis HDMI-Verbindung aufgebaut ist, dann Eingang umschalten
+sleep 5
 cec-ctl -d /dev/cec0 --active-source phys-addr=2.0.0.0
 
-# Warten bis der TV und der Compositor die Verbindung neu aufgebaut haben
-sleep 8
-
-wlr-randr --output HDMI-A-1 --mode 3840x2160 --refresh 30 --transform normal 2>/dev/null || true
+# kanshi setzt Aufloesung + Rotation automatisch sobald der Output erscheint
