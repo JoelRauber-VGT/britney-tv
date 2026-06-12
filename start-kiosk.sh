@@ -8,9 +8,6 @@
 cd "$(dirname "$0")" || exit 1
 export DISPLAY="${DISPLAY:-:0}"
 
-# Display: UHD 4K Querformat sicherstellen
-wlr-randr --output HDMI-A-1 --mode 3840x2160 --refresh 30 --transform normal 2>/dev/null || true
-
 # CEC-Adapter als Playback-Geraet initialisieren (noetig fuer Standby-Steuerung per Cronjob)
 cec-ctl -d /dev/cec0 --playback 2>/dev/null || true
 
