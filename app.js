@@ -167,6 +167,42 @@ if (hasVideo) {
   vid.classList.add('is-front');
 }
 
+/* ── Freeze-Frame gegen das Schwarz-Blitzen ──────────────────────────
+   Beim Quellen-Wechsel der einen Ebene ist das Video kurz leer (schwarz), bis
+   der neue Clip seinen ersten Frame liefert. Wir malen das zuletzt sichtbare
+   Bild auf ein Canvas und legen es darüber — ein reines Standbild, KEIN zweiter
+   Decoder. Sobald der neue Clip wirklich läuft, blenden wir das Canvas weg. */
+const freezeCanvas = hasVideo ? document.createElement('canvas') : null;
+const freezeCtx = freezeCanvas ? freezeCanvas.getContext('2d') : null;
+if (freezeCanvas) {
+  freezeCanvas.className = 'britney__vid';            /* gleiche Lage + object-fit: contain */
+  freezeCanvas.style.opacity = '0';
+  freezeCanvas.style.zIndex = '3';                    /* über der Video-Ebene */
+  freezeCanvas.style.transition = 'none';
+  (vid.parentNode || document.body).appendChild(freezeCanvas);
+}
+
+/* Aktuelles Videobild als Standbild einfrieren und sofort sichtbar machen.
+   Gibt true zurück, wenn ein Bild gehalten wird. */
+function freeze() {
+  if (!freezeCanvas || !vid.videoWidth) return false;
+  try {
+    freezeCanvas.width = vid.videoWidth;
+    freezeCanvas.height = vid.videoHeight;
+    freezeCtx.drawImage(vid, 0, 0);
+  } catch (_) { return false; }
+  freezeCanvas.style.transition = 'none';
+  freezeCanvas.style.opacity = '1';
+  return true;
+}
+
+/* Standbild wieder ausblenden (kurzer Fade auf das nun laufende Live-Video). */
+function unfreeze() {
+  if (!freezeCanvas) return;
+  freezeCanvas.style.transition = 'opacity 140ms linear';
+  freezeCanvas.style.opacity = '0';
+}
+
 /* Wartet, bis ein Element flüssig durchspielbereit ist (mit Sicherheits-Timeout,
    falls canplaythrough mal nicht feuert). */
 function whenReady(el) {
@@ -226,6 +262,7 @@ function nextFrames(n) {
    nie hängen bleiben. */
 async function playClip(name, loop) {
   const src = clip(name);
+  const frozen = freeze();                /* letztes Bild halten → kein Schwarz-Blitz */
   vid.loop = loop;
   vid.onended = null;
   if (vid.dataset.clip !== src) { vid.dataset.clip = src; vid.src = src; vid.load(); }
@@ -237,6 +274,7 @@ async function playClip(name, loop) {
   if (p && p.catch) p.catch(() => {});
   await Promise.race([Promise.resolve(p), new Promise((r) => setTimeout(r, 1500))]);
   await firstFrame(vid);                  /* warten, bis der Clip WIRKLICH spielt */
+  if (frozen) unfreeze();                 /* Standbild ausblenden → Live-Video kommt */
 }
 
 /* Wartet aufs Ende eines (nicht loopenden) Clips — robust: 'ended', notfalls
