@@ -184,17 +184,27 @@ function whenReady(el) {
   });
 }
 
-/* Wartet, bis das Element seinen ERSTEN Frame tatsächlich präsentiert hat. */
+/* Wartet, bis das Element WIRKLICH spielt: erster Frame präsentiert (rVFC) ODER
+   die Wiedergabezeit läuft (currentTime > 0). Sonst würde auf dem Pi ein noch
+   schwarzes, nicht dekodiertes Bild eingeblendet. Großzügige Notbremse (3 s),
+   da der Decoder jetzt frei ist und der Frame normalerweise schnell kommt. */
 function firstFrame(el) {
   return new Promise((resolve) => {
     let done = false;
-    const ok = () => { if (done) return; done = true; clearTimeout(timer); resolve(); };
+    const ok = () => {
+      if (done) return; done = true;
+      clearTimeout(timer);
+      el.removeEventListener('timeupdate', onTime);
+      resolve();
+    };
+    const onTime = () => { if (el.currentTime > 0.04) ok(); };   /* echtes Abspielen erkannt */
     if (el.requestVideoFrameCallback) {
       el.requestVideoFrameCallback(() => ok());
     } else {
-      requestAnimationFrame(() => requestAnimationFrame(ok));   /* Fallback */
+      requestAnimationFrame(() => requestAnimationFrame(ok));    /* Fallback */
     }
-    const timer = setTimeout(ok, 250);   /* Notbremse, falls rVFC nicht feuert */
+    el.addEventListener('timeupdate', onTime);
+    const timer = setTimeout(ok, 3000);   /* Notbremse, falls gar kein Frame kommt */
   });
 }
 
@@ -222,6 +232,14 @@ async function reveal(loop) {
   const f = front();
   b.loop = loop;
   b.onended = null;
+
+  /* Der Raspberry Pi hat nur EINEN Hardware-Video-Decoder. Deshalb den
+     abgehenden Clip ZUERST pausieren — er haelt sein zuletzt dekodiertes Bild
+     als Standframe (kein Decoder noetig), und der neue Clip bekommt den Decoder
+     fuer sich allein. Ohne das blieb der Uebergang schwarz (t=0), weil der alte
+     Loop den Decoder noch belegte. */
+  try { f.pause(); } catch (_) {}
+
   await whenReady(b);
   try { b.currentTime = 0; } catch (_) {}
   /* play() kann auf dem Pi haengen (Promise settlet nie) -> nie ewig warten.
@@ -229,7 +247,7 @@ async function reveal(loop) {
   const pp = b.play();
   if (pp && pp.catch) pp.catch(() => {});
   await Promise.race([Promise.resolve(pp), new Promise((r) => setTimeout(r, 1500))]);
-  await firstFrame(b);                    /* erster Frame ist dekodiert */
+  await firstFrame(b);                    /* warten, bis der Clip WIRKLICH spielt */
 
   /* 1) Neue Ebene voll sichtbar, aber HINTER die alte → komponiert Live-Frame,
         ohne dass man sie sieht (die alte deckt sie ab). */
@@ -297,12 +315,14 @@ async function advance() {
   const watchdog = setTimeout(() => { busy = false; }, 20000);
   try {
     preload(back(), clip(`transition_${stage}`));   /* i. d. R. schon vorbereitet */
-    const t = await reveal(false);                  /* Übergang einmal abspielen */
+    const t = await reveal(false);                  /* Übergang einmal abspielen (Decoder frei) */
 
     const nextStage = (stage % V.stages) + 1;
-    preload(back(), clip(`britney_${nextStage}`));  /* nächsten Loop puffern, während der Übergang läuft */
     await waitForEnd(t);                             /* hängsicher: ended | timeupdate | Timeout */
 
+    /* ERST JETZT den nächsten Loop laden/dekodieren — NICHT während der Übergang
+       läuft. Der Pi hat nur einen Decoder; sonst hängt der Übergang (t bleibt 0). */
+    preload(back(), clip(`britney_${nextStage}`));
     stage = nextStage;
     await reveal(true);                             /* nächster Stand-Loop */
     preload(back(), clip(`transition_${stage}`));   /* schon den Folge-Übergang vorbereiten */
