@@ -47,7 +47,7 @@
   /* Größen in vw — skaliert identisch auf 1080×1920 und 2160×3840 */
   --text-label:     clamp(0.9rem, 1.9vw, 2.6rem);
   --text-qualifier: clamp(1rem, 2.2vw, 3rem);
-  --text-count:     clamp(3.4rem, 11.4vw, 16rem);
+  --text-days:      clamp(8rem, 26vw, 36rem);   /* Countdown-Held: Tage als Riesenzahl */
   --text-unit:      clamp(0.8rem, 1.6vw, 2.2rem);
   --text-iq:        clamp(7rem, 24vw, 34rem);
 
