@@ -54,6 +54,8 @@ const CONFIG = {
     dailyReloadHour: 4,
   },
 
+  debug: false,
+
   /* PIR-Sensor (BS412): serve.py liest GPIO4 und zählt unter /motion hoch.
    * Die Seite pollt diese Adresse (gleicher Origin wie die Seite → kein CORS).
    * Bei jedem neuen Zählerstand wird eine Video-Stufe weitergeschaltet.
