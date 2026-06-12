@@ -9,9 +9,27 @@
 
 /* ── Schriften (lokal, kein CDN — Kiosk muss offline-fest sein) ── */
 @font-face {
-  font-family: "Geist";
-  src: url("./vendor/fonts/geist-latin.woff2") format("woff2");
-  font-weight: 100 900;
+  font-family: "Ubuntu";
+  src: url("./vendor/fonts/ubuntu-300.woff2") format("woff2");
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ubuntu";
+  src: url("./vendor/fonts/ubuntu-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ubuntu";
+  src: url("./vendor/fonts/ubuntu-500.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Ubuntu";
+  src: url("./vendor/fonts/ubuntu-700.woff2") format("woff2");
+  font-weight: 700;
   font-display: swap;
 }
 @font-face {
@@ -40,14 +58,14 @@
   --color-bloom-orange: oklch(55% 0.15 55 / 0.16);
 
   /* ── Typografie ── */
-  --font-display: "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-body:    "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Ubuntu", ui-sans-serif, system-ui, sans-serif;
+  --font-body:    "Ubuntu", ui-sans-serif, system-ui, sans-serif;
   --font-mono:    "Geist Mono", ui-monospace, monospace;
 
   /* Größen in vw — skaliert identisch auf 1080×1920 und 2160×3840 */
   --text-label:     clamp(0.9rem, 1.9vw, 2.6rem);
   --text-qualifier: clamp(1rem, 2.2vw, 3rem);
-  --text-days:      clamp(8rem, 26vw, 36rem);   /* Countdown-Held: Tage als Riesenzahl */
+  --text-count:     clamp(3.4rem, 11.4vw, 16rem);
   --text-unit:      clamp(0.8rem, 1.6vw, 2.2rem);
   --text-iq:        clamp(7rem, 24vw, 34rem);
 
