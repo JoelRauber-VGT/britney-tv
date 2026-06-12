@@ -19,7 +19,7 @@ const CONFIG = {
   },
 
   iq: {
-    current: 0,    /* 0 = noch keine Daten → zeigt »--«. Später hochsetzen (z. B. britney.setIQ(60)). */
+    current: 20,   /* 0 = noch keine Daten → zeigt »--«. Später hochsetzen (z. B. britney.setIQ(60)). */
     start:   20,   /* Wo Britney begonnen hat */
     target:  130,  /* Das Projektziel */
   },
