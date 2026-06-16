@@ -70,8 +70,11 @@ const CONFIG = {
    *   'aurora' – langsam fließende Farbschleier (Standard, edel & lebendig)
    *   'static' – fester Glow ohne Animation (falls der Pi doch ruckelt)
    *   'off'    – flaches Violett-Schwarz (maximal stromsparend)
-   * Performance immer am ECHTEN Pi gegenchecken; bei Rucklern hier umschalten. */
-  background: 'aurora',
+   * Performance immer am ECHTEN Pi gegenchecken; bei Rucklern hier umschalten.
+   * Pi 4 + VP9-Alpha-Video im Hochformat: 'aurora' (animiert) kostet zu viel GPU,
+   * daher Default 'static' (einmal gezeichnet, dann gecacht). Auf starkem Rechner
+   * gern wieder 'aurora'. */
+  background: 'static',
 
   kiosk: {
     /* Täglicher Auto-Reload (Stunde 0–23) gegen Browser-Memory-Drift

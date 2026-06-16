@@ -1,0 +1,8 @@
+# Shell-Skripte immer mit LF auschecken (sonst bricht bash auf dem Pi mit
+# "\r: command not found", egal welches core.autocrlf der Windows-Rechner hat).
+*.sh text eol=lf
+serve.py text eol=lf
+
+# Videos sind Binaer (kein eol/diff-Murks).
+*.webm binary
+*.mp4 binary
