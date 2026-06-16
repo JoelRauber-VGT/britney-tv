@@ -101,16 +101,17 @@ def read_video_set():
         return "real"
 
 
-# .woff2 / .mjs / .mp4 sauber ausliefern (aelteren Python-Versionen fehlt das teils)
+# .woff2 / .mjs / .mp4 / .webm sauber ausliefern (aelteren Python-Versionen fehlt das teils)
 EXTRA_TYPES = {
     ".mp4": "video/mp4",
+    ".webm": "video/webm",
     ".woff2": "font/woff2",
     ".mjs": "text/javascript",
 }
 
 # Grosse Mediendateien duerfen vom Browser gecacht werden (kein Re-Download beim
 # Loopen/Reload); Code/Markup bleibt frisch, damit der Kiosk Aenderungen sieht.
-CACHEABLE = (".mp4", ".woff2", ".png", ".jpg", ".jpeg", ".webp", ".gif")
+CACHEABLE = (".mp4", ".webm", ".woff2", ".png", ".jpg", ".jpeg", ".webp", ".gif")
 
 
 class Handler(SimpleHTTPRequestHandler):

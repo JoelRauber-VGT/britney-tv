@@ -15,6 +15,36 @@ const cfg = CONFIG;
 const $ = (id) => document.getElementById(id);
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/* Hintergrund-Modus (aurora | static | off) auf <html> setzen → steuert die CSS.
+   Bei prefers-reduced-motion fällt 'aurora' automatisch auf 'static' zurück. */
+(() => {
+  let bg = cfg.background || 'aurora';
+  if (bg === 'aurora' && reducedMotion) bg = 'static';
+  document.documentElement.dataset.bg = bg;
+})();
+
+/* Jede Ziffer in einen eigenen, gleich breiten Slot (<span class="dig">) legen.
+   Die Display-Serife (Fraunces) hat KEINE Tabellenziffern — ohne feste Slots
+   würde der Countdown sekündlich in der Breite zappeln. Aktualisiert nur, was
+   sich ändert (kein unnötiges DOM-Neubauen pro Sekunde). */
+function setDigits(el, str) {
+  str = String(str);
+  const kids = el.children;
+  if (kids.length !== str.length) {
+    el.textContent = '';
+    for (const ch of str) {
+      const s = document.createElement('span');
+      s.className = 'dig';
+      s.textContent = ch;
+      el.appendChild(s);
+    }
+    return;
+  }
+  for (let i = 0; i < str.length; i++) {
+    if (kids[i].textContent !== str[i]) kids[i].textContent = str[i];
+  }
+}
+
 /* ── Texte aus der Config setzen ── */
 const phaseEl = $('phase');
 if (phaseEl) {
@@ -46,11 +76,11 @@ function renderDates(hasStarted) {
     : `Startet am ${startStr} · endet am ${endStr}`;
 }
 
+/* „Tage als Held": Nur noch die verbleibenden Tage als große Zahl (aufgerundet,
+   damit der letzte Tag nicht vorzeitig auf 0 springt). Keine tickenden Sekunden
+   mehr — passt zum mehrjährigen Projekt und wirkt ruhiger/edler. */
 function setCount(ms) {
-  $('cd').textContent = String(Math.floor(ms / 86_400_000));
-  $('ch').textContent = String(Math.floor(ms / 3_600_000) % 24).padStart(2, '0');
-  $('cm').textContent = String(Math.floor(ms / 60_000) % 60).padStart(2, '0');
-  $('cs').textContent = String(Math.floor(ms / 1000) % 60).padStart(2, '0');
+  setDigits($('cd'), String(Math.ceil(ms / 86_400_000)));
 }
 
 function tick() {
@@ -86,14 +116,14 @@ function showIQ(value, animate = true) {
   const el = $('iqValue');
   const frac = Math.min(Math.max((value - cfg.iq.start) / (cfg.iq.target - cfg.iq.start), 0), 1);
   const paint = (v, f) => {
-    el.textContent = String(Math.round(v));
+    setDigits(el, String(Math.round(v)));
     $('iqFill').style.transform = `scaleX(${f})`;
     $('iqDot').style.left = `${f * 100}%`;
   };
 
   /* 0 = noch keine Daten: »--«, leerer Balken, kein Hochzählen */
   if (!value) {
-    el.textContent = '--';
+    setDigits(el, '--');
     $('iqFill').style.transform = 'scaleX(0)';
     $('iqDot').style.left = '0%';
     return;
@@ -139,7 +169,15 @@ window.britney = {
  * ════════════════════════════════════════════════════════════════ */
 
 const V = cfg.video;
-const clip = (name) => `${V.dir}/${name}.mp4`;
+/* Beide Sätze (real | pixar) sind transparente WebM-Clips: <V.dir>/<name>.webm.
+   Test-Satz (cfg.video.test.on) bleibt als manueller Override erhalten — wenn an,
+   spielt er statt real/pixar einen festen Ordner: <dir>/<name><suffix>.<ext>. */
+const T = V.test || {};
+const clip = (name) => T.on
+  ? `${T.dir}/${name}${T.suffix || ''}.${T.ext || 'mp4'}`
+  : `${V.dir}/${name}.webm`;
+/* Randmaske immer aus: die echten Clips haben transparente Alpha-Ränder. */
+document.documentElement.dataset.videoTest = '1';   /* CSS: Randmaske aus */
 
 /* ZWEI <video>-Ebenen (Doppel-Puffer): Die sichtbare Ebene (front) spielt den
    aktuellen Clip; in die verdeckte Ebene (back) wird der NÄCHSTE Clip schon vorab

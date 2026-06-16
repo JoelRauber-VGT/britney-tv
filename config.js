@@ -20,8 +20,8 @@ const CONFIG = {
 
   iq: {
     current: 20,   /* 0 = noch keine Daten → zeigt »--«. Später hochsetzen (z. B. britney.setIQ(60)). */
-    start:   20,   /* Wo Britney begonnen hat */
-    target:  130,  /* Das Projektziel */
+    start:   0,    /* Linkes Ende der Skala / des Balkens */
+    target:  180,  /* Rechtes Ende der Skala (Ziel) */
   },
 
   /* Mitte-Videos: Britney-Avatar.
@@ -35,6 +35,19 @@ const CONFIG = {
      * Die Seite fragt das beim Start vom Server ab und lädt sich bei einem
      * Wechsel selbst neu. */
     dir: './vidoes/real',   /* Ordner mit britney_1..N.mp4 und transition_1..N.mp4 */
+
+    /* TEST-SATZ (Transparenz): überschreibt den realen/pixar-Satz und lässt
+     * STATTDESSEN die transparenten WebM-Clips mit voller Stufen-Logik laufen
+     * (Stand-Loops + Transitions schalten normal durch). Schaltet zugleich die
+     * weiche CSS-Randmaske ab, damit man die ECHTEN Alpha-Ränder sieht.
+     * Dateinamen: <dir>/<name><suffix>.<ext> → z. B. ./britney_1_transparent.webm
+     * on: false = aus = normaler Betrieb (real | pixar). */
+    test: {
+      on:     false,
+      dir:    './vidoes/real',
+      suffix: '',
+      ext:    'webm',
+    },
     stages: 4,           /* Anzahl Stand-Loops (britney_1 … britney_4) */
     startStage: 1,       /* womit gestartet wird */
     muted: true,         /* Kiosk läuft lautlos (muted erlaubt den Autostart) */
@@ -52,6 +65,13 @@ const CONFIG = {
   collab: {
     caption: 'Gemeinsames KI-Forschungsprojekt »Britney«',
   },
+
+  /* Bewegter Hintergrund (Aceternity-„Aurora"-Look, rein CSS auf der GPU):
+   *   'aurora' – langsam fließende Farbschleier (Standard, edel & lebendig)
+   *   'static' – fester Glow ohne Animation (falls der Pi doch ruckelt)
+   *   'off'    – flaches Violett-Schwarz (maximal stromsparend)
+   * Performance immer am ECHTEN Pi gegenchecken; bei Rucklern hier umschalten. */
+  background: 'aurora',
 
   kiosk: {
     /* Täglicher Auto-Reload (Stunde 0–23) gegen Browser-Memory-Drift

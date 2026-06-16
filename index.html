@@ -10,7 +10,15 @@
 </head>
 <body>
 
-  <div class="bloom" aria-hidden="true"></div>
+  <!-- Bewegter Hintergrund (Aceternity-„Aurora"-Look, rein CSS/GPU).
+       Drei langsam driftende Farbschleier + Vignette. Über config.js
+       (background: 'aurora' | 'static' | 'off') am Pi umschaltbar. -->
+  <div class="aurora" aria-hidden="true">
+    <span class="aurora__blob aurora__blob--1"></span>
+    <span class="aurora__blob aurora__blob--2"></span>
+    <span class="aurora__blob aurora__blob--3"></span>
+  </div>
+  <div class="vignette" aria-hidden="true"></div>
 
   <!-- Mitte: Britney-Videos. britney_N läuft im Loop, transition_N blendet
        zur nächsten Stufe. Ausgelöst per PIR-Sensor / Leertaste / Shell.
@@ -20,37 +28,14 @@
     <video class="britney__vid" id="vidB" muted playsinline preload="auto"></video>
   </div>
 
-  <!-- Oben: Projekt + Countdown -->
+  <!-- Oben: Countdown als „Tage als Held"-Stat-Block (spiegelt den IQ unten) -->
   <header class="hud hud--top reveal" style="--i: 0">
-    <div class="masthead">
+    <div class="countdown" role="timer" aria-label="Verbleibende Projektzeit">
       <p class="phase" id="phase"></p>
-    </div>
-
-    <div class="count" role="timer" aria-label="Verbleibende Projektzeit">
-      <div class="count__group">
-        <span class="count__value" id="cd">–</span>
-        <span class="count__unit">Tage</span>
-      </div>
-      <span class="count__sep" aria-hidden="true">:</span>
-      <div class="count__group">
-        <span class="count__value" id="ch">––</span>
-        <span class="count__unit">Std</span>
-      </div>
-      <span class="count__sep" aria-hidden="true">:</span>
-      <div class="count__group">
-        <span class="count__value" id="cm">––</span>
-        <span class="count__unit">Min</span>
-      </div>
-      <span class="count__sep" aria-hidden="true">:</span>
-      <div class="count__group">
-        <span class="count__value" id="cs">––</span>
-        <span class="count__unit">Sek</span>
-      </div>
-    </div>
-
-    <div class="meta">
-      <p class="meta__dates" id="dates"></p>
+      <div class="countdown__figure" id="cd" aria-label="Verbleibende Tage">–</div>
+      <p class="countdown__label">Tage bis Projektende</p>
       <div class="track" aria-hidden="true"><div class="track__fill" id="projFill"></div></div>
+      <p class="meta__dates" id="dates"></p>
     </div>
   </header>
 

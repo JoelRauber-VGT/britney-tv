@@ -27,10 +27,98 @@ body {
   outline-offset: 2px;
 }
 
-/* ── Hintergrund: komplett schwarz ── */
-.bloom {
-  display: none;
+/* ── Bewegter Hintergrund: „Aurora" (Aceternity-Look, rein CSS) ──
+   Drei große, weiche Farbschleier driften sehr langsam über das tiefe
+   Violett-Schwarz. Animiert wird NUR transform/opacity → läuft auf der GPU,
+   nicht der CPU, und blockiert die Video-Dekodierung auf dem Pi nicht.
+   Die radial-gradients sind an den Rändern transparent, deshalb braucht es
+   kein teures backdrop-filter/blur. */
+.aurora {
+  position: fixed;
+  inset: -25%;                 /* über den Rand hinaus, damit die Blobs nie „kanten" */
+  z-index: var(--z-bg);
+  overflow: hidden;
+  pointer-events: none;
+  /* eigene GPU-Ebene, isoliert vom Rest */
+  contain: strict;
+  will-change: transform;
 }
+.aurora__blob {
+  position: absolute;
+  width: 75vmax;
+  height: 75vmax;
+  border-radius: 50%;
+  filter: blur(2vmax);         /* nur leichter Weichzeichner — Pi-schonend */
+  opacity: 1;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  mix-blend-mode: screen;      /* Schleier addieren sich zu Licht, kein „Matsch" */
+}
+.aurora__blob--1 {
+  top: -10%; left: -5%;
+  background: radial-gradient(circle at 50% 50%,
+              var(--aurora-violet) 0%, transparent 62%);
+  animation: aurora-1 10s var(--ease-in-out) infinite;
+}
+.aurora__blob--2 {
+  top: 30%; right: -12%;
+  background: radial-gradient(circle at 50% 50%,
+              var(--aurora-rose) 0%, transparent 60%);
+  animation: aurora-2 12s var(--ease-in-out) infinite;
+}
+.aurora__blob--3 {
+  bottom: -15%; left: 20%;
+  background: radial-gradient(circle at 50% 50%,
+              var(--aurora-magenta) 0%, transparent 60%);
+  animation: aurora-3 9s var(--ease-in-out) infinite;
+}
+/* Größere, kurvigere Bahnen mit MEHR Wegpunkten → spürbar lebendigere, aber
+   dank weicher Ease-Kurve weiche Bewegung. Jeder Blob atmet zusätzlich leicht
+   in der Opacity. Krumme, zueinander prime Laufzeiten (22/26/19 s) sorgen dafür,
+   dass sich das Gesamtbild praktisch nie wiederholt. Nur transform/opacity → GPU. */
+@keyframes aurora-1 {
+  0%, 100% { transform: translate3d(-9vw, -6vh, 0)  scale(0.92); opacity: 0.85; }
+  25%      { transform: translate3d(10vw, 7vh, 0)   scale(1.22); opacity: 1;    }
+  50%      { transform: translate3d(20vw, 16vh, 0)  scale(1.34); opacity: 0.9;  }
+  75%      { transform: translate3d(-12vw, 22vh, 0) scale(0.84); opacity: 0.95; }
+}
+@keyframes aurora-2 {
+  0%, 100% { transform: translate3d(8vw, 6vh, 0)     scale(1.05); opacity: 0.9;  }
+  30%      { transform: translate3d(-14vw, -8vh, 0)  scale(1.30); opacity: 1;    }
+  60%      { transform: translate3d(-24vw, -16vh, 0) scale(1.46); opacity: 0.82; }
+  80%      { transform: translate3d(-6vw, 10vh, 0)   scale(1.12); opacity: 0.95; }
+}
+@keyframes aurora-3 {
+  0%, 100% { transform: translate3d(0, 8vh, 0)       scale(0.98); opacity: 0.88; }
+  20%      { transform: translate3d(14vw, -6vh, 0)   scale(1.24); opacity: 1;    }
+  45%      { transform: translate3d(22vw, -14vh, 0)  scale(1.38); opacity: 0.9;  }
+  70%      { transform: translate3d(-10vw, 12vh, 0)  scale(0.82); opacity: 0.96; }
+}
+
+/* Vignette: hält die Ränder dunkel (Textkontrast) und schließt die Aurora
+   sanft zum Violett-Schwarz hin ab. Statisch, kostet nichts. */
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-bg);
+  pointer-events: none;
+  background:
+    radial-gradient(135% 95% at 50% 40%,
+      transparent 0%, transparent 58%, var(--color-paper) 100%),
+    linear-gradient(to bottom,
+      oklch(8% 0.02 315 / 0.40) 0%, transparent 20%,
+      transparent 80%, oklch(8% 0.02 315 / 0.50) 100%);
+}
+
+/* „static": fester Glow statt Animation (Pi-Notbremse via config.js) */
+:root[data-bg="static"] .aurora__blob { animation: none; }
+:root[data-bg="static"] .aurora__blob--1 { transform: translate3d(4vw, 6vh, 0) scale(1.1); }
+:root[data-bg="static"] .aurora__blob--2 { transform: translate3d(-6vw, -4vh, 0) scale(1.15); }
+:root[data-bg="static"] .aurora__blob--3 { transform: translate3d(6vw, -4vh, 0) scale(1.05); }
+
+/* „off": komplett flaches Violett-Schwarz */
+:root[data-bg="off"] .aurora,
+:root[data-bg="off"] .vignette { display: none; }
 
 /* ── Mitte: Forschungskooperation VGT × FHNW ──
    Logos sitzen in der unteren Bühnenhälfte — darüber bleibt Raum frei
@@ -92,7 +180,7 @@ body {
   font-size: clamp(3rem, 10vw, 10rem);
   line-height: 1;
   color: var(--color-accent);
-  text-shadow: 0 0 4vh oklch(74% 0.17 55 / 0.55);
+  text-shadow: 0 0 4vh oklch(65% 0.187 15 / 0.5);
   animation: x-pulse 3.4s var(--ease-in-out) infinite;
 }
 @keyframes x-pulse {
@@ -122,6 +210,28 @@ body {
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
+/* Weicher Bloom hinter dem Video: nimmt den violett-rosa Glow der Avatare auf,
+   damit das Video aus dem Hintergrund „herauswächst" statt als Box zu schweben.
+   Atmet ganz langsam. */
+.britney::before {
+  content: "";
+  position: absolute;
+  inset: -18% -12%;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 42%,
+      var(--aurora-rose) 0%, transparent 70%),
+    radial-gradient(ellipse 70% 65% at 50% 50%,
+      var(--aurora-violet) 0%, transparent 72%);
+  filter: blur(3vmax);
+  opacity: 0.85;
+  will-change: transform, opacity;
+  animation: britney-bloom 9s var(--ease-in-out) infinite;
+}
+@keyframes britney-bloom {
+  0%, 100% { transform: scale(1);    opacity: 0.78; }
+  50%      { transform: scale(1.06); opacity: 0.95; }
+}
 .britney__vid {
   position: absolute;
   inset: 0;
@@ -130,8 +240,21 @@ body {
   object-fit: contain;
   opacity: 0;
   transition: opacity var(--britney-fade, 160ms) linear;
+  /* Ränder weich ausfedern: die dunklen Video-Ecken werden transparent, das
+     leuchtende Zentrum schmilzt nahtlos in die Aurora (keine sichtbare Box). */
+  -webkit-mask: radial-gradient(ellipse 76% 80% at 50% 45%,
+                #000 52%, transparent 100%);
+          mask: radial-gradient(ellipse 76% 80% at 50% 45%,
+                #000 52%, transparent 100%);
 }
 .britney__vid.is-front { opacity: 1; }
+
+/* Transparenz-Test (cfg.video.test.on): weiche Randmaske aus, damit man die
+   ECHTEN Clip-Ränder/Alpha-Kanten sieht statt des CSS-Ausblendens. */
+:root[data-video-test] .britney__vid { -webkit-mask: none; mask: none; }
+
+/* Hintergrund „off": auch Bloom aus, damit es wirklich flach bleibt */
+:root[data-bg="off"] .britney::before { display: none; }
 
 /* ── HUD ── */
 .hud {
@@ -145,23 +268,12 @@ body {
 .hud--top    { top: 3.4vh; }
 .hud--bottom { bottom: 3.2vh; }
 
-/* Kopfzeile: nur noch die Phase, rechtsbündig über dem Countdown */
-.masthead {
-  display: flex;
-  align-items: baseline;
-  justify-content: flex-end;
-  gap: var(--space-lg);
-  min-height: 1em;                  /* hält die Hairline, auch wenn Phase leer ist */
-  padding-bottom: var(--space-sm);
-  border-bottom: var(--rule-hairline);
-}
-
 .label {
   margin: 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: var(--text-label);
-  font-weight: 300;
-  letter-spacing: 0.18em;
+  font-weight: 400;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--color-ink-2);
 }
@@ -175,49 +287,98 @@ body {
 
 .phase {
   margin: 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: calc(var(--text-label) * 0.82);
-  font-weight: 200;
-  letter-spacing: 0.18em;
+  font-weight: 400;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--color-muted);
 }
 
-/* Countdown — die große Zahl oben, linksbündig */
-.count {
+/* ── Countdown oben: „Tage als Held" — zentrierter Stat-Block, der den
+   IQ-Block unten spiegelt (große Serifen-Zahl + Label + glühender Balken). ── */
+.countdown {
   display: flex;
-  align-items: baseline;
-  gap: 0.06em;
-  margin-top: var(--space-lg);
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-sm);
 }
-.count__group { display: flex; flex-direction: column; }
-.count__value {
+.countdown__figure {
+  font-family: var(--font-numeric);
   font-size: var(--text-count);
   font-weight: 500;
-  line-height: 1;
-  letter-spacing: -0.02em;
+  line-height: 0.92;
+  color: var(--color-ink);
+  /* „Lebt": die Zahl atmet einen warmen Marken-Glow ein und aus. Nur
+     text-shadow/transform → GPU-/Pi-schonend. Stoppt bei reduced-motion. */
+  will-change: transform;
+  animation: cd-breathe 5.5s var(--ease-in-out) infinite;
 }
-.count__unit {
-  margin-top: var(--space-xs);
+@keyframes cd-breathe {
+  0%, 100% {
+    transform: scale(1);
+    text-shadow: 0 0 1.2vh oklch(65% 0.187 15 / 0.16),
+                 0 0 0.4vh oklch(66% 0.150 330 / 0.12);
+  }
+  50% {
+    transform: scale(1.018);
+    text-shadow: 0 0 3.6vh oklch(66% 0.200 15 / 0.42),
+                 0 0 1.4vh oklch(66% 0.150 330 / 0.38);
+  }
+}
+.countdown__label {
+  margin: 0;
+  font-family: var(--font-body);
   font-size: var(--text-unit);
   font-weight: 400;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-muted);
 }
-.count__sep {
-  font-size: var(--text-count);
-  font-weight: 300;
-  line-height: 1;
-  color: var(--color-rule);
-  transform: translateY(-0.06em);
+/* Balken nicht über die volle Breite — als kompakter Block unter der Zahl */
+.countdown .track {
+  width: min(62vw, 540px);
+  margin-top: var(--space-xs);
+  isolation: isolate;          /* Lichtglanz sauber über den Fill legen */
+}
+/* In Intervallen wandert ein heller Glanz über den Balken — signalisiert
+   „die Projektuhr läuft". Liegt ÜBER dem Fill (::after), tastet im Markenton
+   sanft hell auf. Bewegt nur background-position eines 3px-Slivers → minimal.
+   Die Pause am Ende der Keyframes erzeugt das „immer wieder"-Aufblitzen. */
+.countdown .track::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background: linear-gradient(90deg,
+              transparent 0%,
+              oklch(98% 0.02 320 / 0.65) 50%,
+              transparent 100%);
+  background-size: 32% 100%;
+  background-repeat: no-repeat;
+  background-position: -45% 0;
+  animation: cd-sheen 5.5s var(--ease-in-out) infinite;
+}
+@keyframes cd-sheen {
+  0%   { background-position: -45% 0; }
+  55%  { background-position: 145% 0; }
+  100% { background-position: 145% 0; }   /* kurze Ruhe, dann wieder */
 }
 
-.meta { margin-top: var(--space-lg); }   /* volle Breite (innerhalb des HUD-Rands) */
+/* Feste, gleich breite Ziffern-Slots → ruhige Zahlen auch ohne
+   Tabellenziffern in der Serife (jede Ziffer sitzt zentriert in 0.7em). */
+.countdown__figure .dig,
+.iq__figure .dig {
+  display: inline-block;
+  width: 0.7em;
+  text-align: center;
+}
+
 .meta__dates {
-  margin: 0 0 var(--space-sm);
+  margin: var(--space-xs) 0 0;
   font-size: var(--text-qualifier);
   color: var(--color-ink-2);
 }
@@ -231,25 +392,61 @@ body {
 /* Fortschritts-Hairline (Projekt + IQ) */
 .track {
   position: relative;
-  height: 2px;
+  height: 3px;
+  border-radius: 999px;
   background: var(--color-rule-2);
 }
 .track__fill {
   position: absolute;
   inset: 0;
-  background: var(--color-accent-2);
+  border-radius: 999px;
+  background: var(--brand-gradient);   /* VGT Koralle→Rosé */
   transform: scaleX(0);             /* skaliert statt width — GPU-freundlich */
   transform-origin: left;
+  /* leuchtender Balken — vertikaler Glow-Hof im Markenton */
+  box-shadow: 0 0 0.9vh oklch(65% 0.20 15 / 0.75),
+              0 0 0.35vh oklch(70% 0.16 36 / 0.7);
 }
 .track__dot {
   position: absolute;
   top: 50%;
   left: 0%;                          /* wird von JS im IQ-Zähler mitgeführt */
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   transform: translate(-50%, -50%);
   background: var(--color-accent);
   border-radius: 50%;
+  /* glühender Schieberegler-Punkt — pulsiert (atmet) */
+  box-shadow: 0 0 1.6vh oklch(65% 0.20 15 / 0.95),
+              0 0 0.6vh oklch(70% 0.16 36 / 0.85),
+              0 0 0.2vh oklch(96% 0.02 320 / 0.9);
+  animation: iq-dot-pulse 2.6s var(--ease-in-out) infinite;
+}
+
+/* Glow-Puls — nur box-shadow/Opacity, GPU-/Pi-schonend. Der IQ-Balken atmet
+   synchron mit dem Punkt (nur die IQ-Bar, nicht der Projekt-Fortschritt oben). */
+@keyframes iq-dot-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0.7vh oklch(65% 0.20 15 / 0.55),
+                0 0 0.3vh oklch(70% 0.16 36 / 0.5),
+                0 0 0.2vh oklch(96% 0.02 320 / 0.8);
+  }
+  50% {
+    box-shadow: 0 0 2.4vh oklch(66% 0.22 15 / 1),
+                0 0 1vh   oklch(71% 0.17 36 / 0.95),
+                0 0 0.25vh oklch(98% 0.02 320 / 1);
+  }
+}
+.iq .track__fill { animation: iq-bar-pulse 2.6s var(--ease-in-out) infinite; }
+@keyframes iq-bar-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0.6vh oklch(65% 0.20 15 / 0.55),
+                0 0 0.3vh oklch(70% 0.16 36 / 0.5);
+  }
+  50% {
+    box-shadow: 0 0 1.4vh oklch(65% 0.21 15 / 0.9),
+                0 0 0.55vh oklch(70% 0.16 36 / 0.8);
+  }
 }
 
 /* ── IQ-Stat unten: Riesenzahl links, Meta rechts daneben ── */
@@ -261,12 +458,10 @@ body {
   border-top: var(--rule-hairline);
 }
 .iq__figure {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
+  font-family: var(--font-numeric);
   font-size: var(--text-iq);
   font-weight: 500;
   line-height: 0.86;
-  letter-spacing: -0.03em;
 }
 .iq__meta {
   flex: 1;
