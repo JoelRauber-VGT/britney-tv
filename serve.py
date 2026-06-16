@@ -83,6 +83,24 @@ def start_motion_sensor():
     threading.Thread(target=_poll_motion_loop, daemon=True).start()
     print(f"PIR-Sensor aktiv (Polling): GPIO{MOTION_PIN} -> /motion", flush=True)
 
+# ── Aktiver Video-Satz (real | pixar) ─────────────────────────────
+# vidoes/active.txt enthaelt den Namen des aktiven Ordners. Umgeschaltet wird
+# per ./switch-videos.sh; die Kiosk-Seite pollt /videoset und laedt sich bei
+# Aenderung selbst neu (Wayland-sicher, kein xdotool).
+ACTIVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                           "vidoes", "active.txt")
+
+
+def read_video_set():
+    """Liest den aktiven Satz aus vidoes/active.txt; Standard 'real'."""
+    try:
+        with open(ACTIVE_FILE, "r", encoding="utf-8") as fh:
+            name = fh.read().strip()
+        return name or "real"
+    except OSError:
+        return "real"
+
+
 # .woff2 / .mjs / .mp4 sauber ausliefern (aelteren Python-Versionen fehlt das teils)
 EXTRA_TYPES = {
     ".mp4": "video/mp4",
@@ -107,17 +125,27 @@ class Handler(SimpleHTTPRequestHandler):
     disable_nagle_algorithm = True    # TCP_NODELAY -> keine Sende-Verzoegerung
 
     def do_GET(self):
+        route = self.path.split("?", 1)[0]
         # Bewegungs-Zaehler fuer die Seite (gleicher Origin)
-        if self.path.split("?", 1)[0] == "/motion":
+        if route == "/motion":
             with _motion_lock:
                 body = json.dumps({"count": _motion_count}).encode()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
+            self._send_json(body)
+            return
+        # Aktiver Video-Satz (real | pixar) fuer die Seite
+        if route == "/videoset":
+            body = json.dumps({"set": read_video_set()}).encode()
+            self._send_json(body)
             return
         super().do_GET()
+
+    def _send_json(self, body):
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
 
     def copyfile(self, source, outputfile):
         # 1-MB-Bloecke statt der Standard-64 KB -> deutlich weniger Syscalls

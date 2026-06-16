@@ -30,12 +30,17 @@ const CONFIG = {
    * zurück auf britney_1. Eine Stufe wird ausgelöst durch PIR-Sensor,
    * Leertaste (lokaler Test) oder britney.advance() in der Konsole. */
   video: {
-    dir: './vidoes',     /* Ordner mit britney_1..N.mp4 und transition_1..N.mp4 */
+    /* Standard-Ordner (Fallback). Welcher Satz WIRKLICH läuft, bestimmt
+     * vidoes/active.txt (real | pixar) – per ./switch-videos.sh umschaltbar.
+     * Die Seite fragt das beim Start vom Server ab und lädt sich bei einem
+     * Wechsel selbst neu. */
+    dir: './vidoes/real',   /* Ordner mit britney_1..N.mp4 und transition_1..N.mp4 */
     stages: 4,           /* Anzahl Stand-Loops (britney_1 … britney_4) */
     startStage: 1,       /* womit gestartet wird */
     muted: true,         /* Kiosk läuft lautlos (muted erlaubt den Autostart) */
-    crossfadeMs: 130,    /* kurze Überblendung — verdeckt den Stale-Frame beim Wechsel.
-                            0 = harter Schnitt (blitzt evtl. 1 Frame), höher = weicher */
+    crossfadeMs: 0,      /* 0 = harter Schnitt (kein Überblenden, keine Überlappung).
+                            >0 würde beide Clips kurz per Opacity ineinanderblenden.
+                            Dank Vorpufferung blitzt auch der harte Schnitt nicht. */
     cooldownMs: 5000,    /* Sperre nach einem Auslöser: 5 s lang werden weitere
                             Bewegungen ignoriert (jemand laeuft durch + wackelt
                             gleich nochmal -> nur EIN Wechsel). 0 = keine Sperre */

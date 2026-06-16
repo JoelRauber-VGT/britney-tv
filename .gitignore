@@ -3,3 +3,11 @@ __pycache__/
 
 # Backup der Original-Transitions (vor Pi-Re-Encode)
 vidoes/_orig/
+vidoes/_mpeg4_backup/
+vidoes/*/_orig_backup/
+
+# Claude-Code Arbeitsspeicher (kein Projektinhalt)
+memory/
+
+# Laufzeit-Status: aktiver Video-Satz (per switch-videos.sh gesetzt, Pi-lokal)
+vidoes/active.txt

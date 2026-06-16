@@ -141,66 +141,54 @@ window.britney = {
 const V = cfg.video;
 const clip = (name) => `${V.dir}/${name}.mp4`;
 
-/* WICHTIG (Raspberry Pi): Der Pi kann nur EIN Video gleichzeitig dekodieren.
-   Deshalb nutzen wir bewusst NUR EINE <video>-Ebene (#vidA) und schalten ihre
-   Quelle um, statt zwei gestapelte Videos zu kreuzblenden. Mit zwei gleichzeitigen
-   <video> bekam die Transition auf dem Pi keinen Decoder und blieb schwarz (t=0). */
+/* ZWEI <video>-Ebenen (Doppel-Puffer): Die sichtbare Ebene (front) spielt den
+   aktuellen Clip; in die verdeckte Ebene (back) wird der NÄCHSTE Clip schon vorab
+   vollständig geladen, WÄHREND der aktuelle läuft. Beim Umschalten wird deshalb
+   nichts neu geladen/gerendert — es wird nur HART auf die bereits laufende back-
+   Ebene umgeschaltet. Kein Ruckler, auch beim Zurückspringen auf britney_1.
+   Bewusst nur 2 Ebenen = nur 2 Decoder gleichzeitig: mehr (z. B. ein Element je
+   Clip) überfordert den Browser/Pi → schwarzes Bild. */
 const vid  = $('vidA');
-const vid2 = $('vidB');
-if (vid2) { try { vid2.pause(); } catch (_) {} vid2.removeAttribute('src'); vid2.style.display = 'none'; }
+let   vid2 = $('vidB');
 const hasVideo = !!vid;
+if (hasVideo && !vid2) {            /* Fallback: zweite Ebene anlegen, falls im HTML fehlend */
+  vid2 = vid.cloneNode(false);
+  vid2.removeAttribute('id');
+  (vid.parentNode || document.body).appendChild(vid2);
+}
 
 let stage = V.startStage || 1;     /* aktueller Stand-Loop: britney_<stage> */
 let busy = false;                  /* true, während ein Übergang läuft */
 let cooldownUntil = 0;
 
-/* nur fürs Debug-Overlay (liest layers[0]/[1] und frontIdx) */
-const layers = [vid, vid2 || vid];
+/* Übergangsdauer: 0 = harter Schnitt (keine Überlappung). >0 würde per CSS-Opacity
+   weich überblenden. */
+const fadeMs = V.crossfadeMs >= 0 ? V.crossfadeMs : 0;
+document.documentElement.style.setProperty('--britney-fade', fadeMs + 'ms');
+
+let front = vid, back = vid2;      /* front = sichtbar/läuft · back = nächster Clip */
+const layers = [vid, vid2];        /* nur fürs Debug-Overlay (liest layers[0]/[1]) */
 let frontIdx = 0;
 
 if (hasVideo) {
-  vid.muted = V.muted !== false;
-  vid.preload = 'auto';
-  vid.playsInline = true;
-  vid.style.opacity = '1';
-  vid.style.zIndex = '1';
-  vid.classList.add('is-front');
+  for (const el of [vid, vid2]) {
+    el.muted = V.muted !== false;
+    el.preload = 'auto';
+    el.playsInline = true;
+    el.classList.remove('is-front');
+    el.style.opacity = '0';
+  }
+  front.style.opacity = '1';  front.style.zIndex = '2';
+  back.style.zIndex = '1';
 }
 
-/* ── Freeze-Frame gegen das Schwarz-Blitzen ──────────────────────────
-   Beim Quellen-Wechsel der einen Ebene ist das Video kurz leer (schwarz), bis
-   der neue Clip seinen ersten Frame liefert. Wir malen das zuletzt sichtbare
-   Bild auf ein Canvas und legen es darüber — ein reines Standbild, KEIN zweiter
-   Decoder. Sobald der neue Clip wirklich läuft, blenden wir das Canvas weg. */
-const freezeCanvas = hasVideo ? document.createElement('canvas') : null;
-const freezeCtx = freezeCanvas ? freezeCanvas.getContext('2d') : null;
-if (freezeCanvas) {
-  freezeCanvas.className = 'britney__vid';            /* gleiche Lage + object-fit: contain */
-  freezeCanvas.style.opacity = '0';
-  freezeCanvas.style.zIndex = '3';                    /* über der Video-Ebene */
-  freezeCanvas.style.transition = 'none';
-  (vid.parentNode || document.body).appendChild(freezeCanvas);
-}
-
-/* Aktuelles Videobild als Standbild einfrieren und sofort sichtbar machen.
-   Gibt true zurück, wenn ein Bild gehalten wird. */
-function freeze() {
-  if (!freezeCanvas || !vid.videoWidth) return false;
-  try {
-    freezeCanvas.width = vid.videoWidth;
-    freezeCanvas.height = vid.videoHeight;
-    freezeCtx.drawImage(vid, 0, 0);
-  } catch (_) { return false; }
-  freezeCanvas.style.transition = 'none';
-  freezeCanvas.style.opacity = '1';
-  return true;
-}
-
-/* Standbild wieder ausblenden (kurzer Fade auf das nun laufende Live-Video). */
-function unfreeze() {
-  if (!freezeCanvas) return;
-  freezeCanvas.style.transition = 'opacity 140ms linear';
-  freezeCanvas.style.opacity = '0';
+/* Einen Clip in eine Ebene laden und vorpuffern (OHNE ihn abzuspielen). Setzt die
+   Quelle nur, wenn sie sich ändert → kein unnötiges Neuladen. */
+function arm(el, name, loop) {
+  const src = clip(name);
+  el.loop = loop;
+  el.onended = null;
+  if (el.dataset.clip !== src) { el.dataset.clip = src; el.src = src; el.load(); }
 }
 
 /* Wartet, bis ein Element flüssig durchspielbereit ist (mit Sicherheits-Timeout,
@@ -246,35 +234,32 @@ function firstFrame(el) {
   });
 }
 
-/* Wartet n Animations-Frames (Compositor-Takte). */
-function nextFrames(n) {
-  return new Promise((resolve) => {
-    let i = 0, done = false;
-    const fin = () => { if (!done) { done = true; resolve(); } };
-    const step = () => { if (done) return; if (++i >= n) fin(); else requestAnimationFrame(step); };
-    requestAnimationFrame(step);
-    setTimeout(fin, 500);   /* Notbremse, falls rAF (z. B. versteckter Tab) nicht feuert */
-  });
-}
-
-/* Quelle der EINEN Video-Ebene umschalten und abspielen. Wartet, bis der Clip
-   WIRKLICH läuft (currentTime > 0). Jeder Schritt hat einen Timeout → es kann
-   nie hängen bleiben. */
-async function playClip(name, loop) {
-  const src = clip(name);
-  const frozen = freeze();                /* letztes Bild halten → kein Schwarz-Blitz */
-  vid.loop = loop;
-  vid.onended = null;
-  if (vid.dataset.clip !== src) { vid.dataset.clip = src; vid.src = src; vid.load(); }
-  await whenReady(vid);
-  try { vid.currentTime = 0; } catch (_) {}
-  /* play() kann auf dem Pi haengen (Promise settlet nie) -> nie ewig warten.
-     Reject (Autoplay-Block) wird separat geschluckt. */
-  const p = vid.play();
+/* Ein Element von vorn starten und warten, bis es WIRKLICH spielt (erster Frame
+   präsentiert / currentTime > 0). Jeder Schritt hat einen Timeout → kann nie
+   hängen bleiben (Pi: play()-Promise settlet evtl. nie; Autoplay-Reject geschluckt). */
+async function startPlaying(el) {
+  await whenReady(el);
+  try { el.currentTime = 0; } catch (_) {}
+  const p = el.play();
   if (p && p.catch) p.catch(() => {});
   await Promise.race([Promise.resolve(p), new Promise((r) => setTimeout(r, 1500))]);
-  await firstFrame(vid);                  /* warten, bis der Clip WIRKLICH spielt */
-  if (frozen) unfreeze();                 /* Standbild ausblenden → Live-Video kommt */
+  await firstFrame(el);
+}
+
+/* Den vorbereiteten back-Clip einblenden: back starten (ist schon gepuffert), dann
+   HART auf ihn umschalten (kein Schwarzblitz, da der erste Frame bereits steht) und
+   front/back tauschen. Die alte front-Ebene wird pausiert und dient danach als
+   Puffer für den übernächsten Clip. */
+async function activate() {
+  await startPlaying(back);                          /* back läuft + erster Frame steht */
+  back.style.opacity = '1';  back.style.zIndex = '2';
+  front.style.opacity = '0'; front.style.zIndex = '1';
+  const prev = front;
+  front = back;
+  back = prev;
+  frontIdx ^= 1;
+  layers[0] = front;
+  try { back.pause(); } catch (_) {}                 /* verdeckte Ebene anhalten (CPU) */
 }
 
 /* Wartet aufs Ende eines (nicht loopenden) Clips — robust: 'ended', notfalls
@@ -298,20 +283,29 @@ function waitForEnd(el) {
   });
 }
 
-/* Eine Stufe weiterschalten: Übergang spielen, dann nächsten Stand-Loop.
-   Beide sind dank Vorab-Pufferung schon geladen → kein Ruckeln. */
+/* Eine Stufe weiterschalten: vorgepufferten Übergang einblenden, dann nächsten
+   Stand-Loop. Der jeweils nächste Clip liegt schon fertig in der back-Ebene →
+   nur play + hartes Umschalten, kein Neuladen → kein Ruckeln (auch beim
+   Zurückspringen auf britney_1). */
 async function advance() {
   if (!hasVideo || busy) return;
   busy = true;
-  /* Watchdog: egal was im Übergang schiefläuft – busy darf NIE dauerhaft
-     hängen bleiben, sonst ignoriert triggerMotion ab da jede Bewegung. */
+  /* Watchdog: egal was schiefläuft – busy darf NIE dauerhaft hängen bleiben,
+     sonst ignoriert triggerMotion ab da jede Bewegung. */
   const watchdog = setTimeout(() => { busy = false; }, 20000);
   try {
-    await playClip(`transition_${stage}`, false);   /* Übergang spielt EINMAL */
-    await waitForEnd(vid);                           /* hängsicher: ended | timeupdate | Timeout */
+    /* back hält bereits transition_<stage> (beim Start/letzten Wechsel vorgeladen) */
+    await activate();                                /* Übergang einblenden, spielt EINMAL */
 
+    /* nächsten Stand-Loop in die jetzt freie back-Ebene vorladen, während Übergang läuft */
     stage = (stage % V.stages) + 1;
-    await playClip(`britney_${stage}`, true);        /* nächster Stand-Loop */
+    arm(back, `britney_${stage}`, true);
+
+    await waitForEnd(front);                         /* hängsicher: ended | timeupdate | Timeout */
+    await activate();                                /* nächsten Stand-Loop einblenden */
+
+    /* den darauf folgenden Übergang für die nächste Bewegung vorpuffern */
+    arm(back, `transition_${stage}`, false);
   } finally {
     clearTimeout(watchdog);
     busy = false;
@@ -330,20 +324,40 @@ addEventListener('keydown', (e) => {
   if (e.code === 'Space') { e.preventDefault(); triggerMotion(); }
 });
 
-/* Start: ersten Stand-Loop anzeigen, dann ersten Übergang + restliche Clips
-   im Hintergrund vorpuffern, damit jeder Wechsel sofort flüssig läuft. */
+/* Start: ersten Stand-Loop in die front-Ebene laden + abspielen, dann ersten
+   Übergang schon in die back-Ebene vorpuffern (erste Bewegung schaltet flüssig). */
 async function startBritney() {
   if (!hasVideo) return;
-  await playClip(`britney_${stage}`, true);
-  /* Cache aller übrigen Clips vorwärmen (Dateien sind cachebar ausgeliefert) */
-  setTimeout(() => {
-    for (let i = 1; i <= V.stages; i++) {
-      fetch(clip(`britney_${i}`)).catch(() => {});
-      fetch(clip(`transition_${i}`)).catch(() => {});
-    }
-  }, 1500);
+  arm(front, `britney_${stage}`, true);
+  await startPlaying(front);
+  front.style.opacity = '1';  front.style.zIndex = '2';
+  arm(back, `transition_${stage}`, false);
 }
-startBritney();
+/* ── Aktiver Video-Satz (real | pixar) ───────────────────────────────
+   vidoes/active.txt bestimmt, welcher Ordner läuft; serve.py liefert ihn unter
+   /videoset. Wir holen ihn VOR dem Start (setzt V.dir) und pollen danach: ändert
+   ihn jemand per ./switch-videos.sh, lädt sich die Seite selbst neu (Wayland-
+   sicher, kein xdotool). Ohne Server (lokal/file://) bleibt der Wert aus config. */
+let activeSet = null;
+async function fetchVideoSet() {
+  const res = await fetch('/videoset', { cache: 'no-store' });
+  const { set } = await res.json();
+  return set;
+}
+(async function initVideoSet() {
+  try {
+    const set = await fetchVideoSet();
+    if (set) { activeSet = set; V.dir = './vidoes/' + set; }
+  } catch (_) { /* Endpunkt nicht erreichbar → V.dir aus config (Fallback) */ }
+  startBritney();
+  /* Auf Wechsel lauschen */
+  setInterval(async () => {
+    try {
+      const set = await fetchVideoSet();
+      if (activeSet && set && set !== activeSet) location.reload();
+    } catch (_) { /* still ignorieren */ }
+  }, 2000);
+})();
 
 /* Öffentliche API erweitern */
 window.britney.motion  = triggerMotion;                       /* eine Bewegung (PIR/Shell/Test) */
@@ -353,7 +367,10 @@ window.britney.reset   = async () => {                        /* zurück auf bri
   stage = V.startStage || 1;
   busy = false;
   cooldownUntil = 0;
-  await playClip(`britney_${stage}`, true);
+  arm(front, `britney_${stage}`, true);
+  await startPlaying(front);
+  front.style.opacity = '1';  front.style.zIndex = '2';
+  arm(back, `transition_${stage}`, false);
 };
 
 /* Echte Sensor-Anbindung: serve.py liest den PIR-Sensor und zählt unter
