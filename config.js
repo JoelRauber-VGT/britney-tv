@@ -35,18 +35,17 @@ const CONFIG = {
      * Die Seite fragt das beim Start vom Server ab und lädt sich bei einem
      * Wechsel selbst neu. */
     dir: './vidoes/real',   /* Ordner mit britney_1..N.mp4 und transition_1..N.mp4 */
+    ext: 'mp4',             /* Dateiformat der real/pixar-Sätze (opake H.264-Clips) */
 
-    /* TEST-SATZ (Transparenz): überschreibt den realen/pixar-Satz und lässt
-     * STATTDESSEN die transparenten WebM-Clips mit voller Stufen-Logik laufen
-     * (Stand-Loops + Transitions schalten normal durch). Schaltet zugleich die
-     * weiche CSS-Randmaske ab, damit man die ECHTEN Alpha-Ränder sieht.
-     * Dateinamen: <dir>/<name><suffix>.<ext> → z. B. ./britney_1_transparent.webm
+    /* TEST-SATZ: überschreibt den realen/pixar-Satz und lässt STATTDESSEN einen
+     * festen Ordner mit voller Stufen-Logik laufen (Stand-Loops + Transitions
+     * schalten normal durch). Dateinamen: <dir>/<name><suffix>.<ext>.
      * on: false = aus = normaler Betrieb (real | pixar). */
     test: {
       on:     false,
-      dir:    './vidoes/real',
+      dir:    '.',
       suffix: '',
-      ext:    'webm',
+      ext:    'mp4',
     },
     stages: 4,           /* Anzahl Stand-Loops (britney_1 … britney_4) */
     startStage: 1,       /* womit gestartet wird */

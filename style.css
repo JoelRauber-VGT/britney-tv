@@ -205,8 +205,10 @@ body {
   left: 50%;
   top: 44%;
   z-index: var(--z-base);
-  width: min(90vw, 1000px);
   height: 48vh;
+  aspect-ratio: 1248 / 1656;   /* Box hugt das Hochformat-Video → keine seitliche
+                                  Letterbox, damit der weiche Rand alle 4 Kanten trifft */
+  max-width: 90vw;
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
@@ -240,18 +242,21 @@ body {
   object-fit: contain;
   opacity: 0;
   transition: opacity var(--britney-fade, 160ms) linear;
-  /* Ränder weich ausfedern: die dunklen Video-Ecken werden transparent, das
-     leuchtende Zentrum schmilzt nahtlos in die Aurora (keine sichtbare Box). */
-  -webkit-mask: radial-gradient(ellipse 76% 80% at 50% 45%,
-                #000 52%, transparent 100%);
-          mask: radial-gradient(ellipse 76% 80% at 50% 45%,
-                #000 52%, transparent 100%);
 }
 .britney__vid.is-front { opacity: 1; }
 
-/* Transparenz-Test (cfg.video.test.on): weiche Randmaske aus, damit man die
-   ECHTEN Clip-Ränder/Alpha-Kanten sieht statt des CSS-Ausblendens. */
-:root[data-video-test] .britney__vid { -webkit-mask: none; mask: none; }
+/* Weiche Randmaske NUR für opake Clips (H.264-MP4 ohne Alpha-Rand, data-video-mask
+   ="on" aus app.js): gleichmäßiger weicher Rand auf allen 4 Seiten als STATISCHE
+   Masken-Grafik (video-mask.png, weiß innen → transparent am Rand). Bewusst EINE
+   Maskenebene statt zweier per mask-composite verschnittener Verläufe: Letzteres
+   zwingt den Browser pro Frame in einen teuren Compositing-Pfad (Ruckeln auf dem
+   Pi). Die Textur dagegen wird einmal gerastert und ist quasi gratis.
+   Feather-Breite steckt in der PNG (per Skript neu erzeugbar). Transparente
+   WebM-Sätze brauchen die Maske nicht und bleiben unmaskiert. */
+:root[data-video-mask="on"] .britney__vid {
+  -webkit-mask: url('./video-mask.png') center / 100% 100% no-repeat;
+          mask: url('./video-mask.png') center / 100% 100% no-repeat;
+}
 
 /* Hintergrund „off": auch Bloom aus, damit es wirklich flach bleibt */
 :root[data-bg="off"] .britney::before { display: none; }

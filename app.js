@@ -169,15 +169,21 @@ window.britney = {
  * ════════════════════════════════════════════════════════════════ */
 
 const V = cfg.video;
-/* Beide Sätze (real | pixar) sind transparente WebM-Clips: <V.dir>/<name>.webm.
-   Test-Satz (cfg.video.test.on) bleibt als manueller Override erhalten — wenn an,
-   spielt er statt real/pixar einen festen Ordner: <dir>/<name><suffix>.<ext>. */
+/* Beide Sätze (real | pixar) liegen als <V.dir>/<name>.<ext> (Standard: mp4 –
+   opake H.264-Clips, vom Pi 4 in Hardware dekodierbar). Test-Satz
+   (cfg.video.test.on) bleibt als manueller Override erhalten — wenn an, spielt er
+   statt real/pixar einen festen Ordner: <dir>/<name><suffix>.<ext>. */
 const T = V.test || {};
+const EXT = (V.ext || 'mp4').toLowerCase();
 const clip = (name) => T.on
   ? `${T.dir}/${name}${T.suffix || ''}.${T.ext || 'mp4'}`
-  : `${V.dir}/${name}.webm`;
-/* Randmaske immer aus: die echten Clips haben transparente Alpha-Ränder. */
-document.documentElement.dataset.videoTest = '1';   /* CSS: Randmaske aus */
+  : `${V.dir}/${name}.${EXT}`;
+/* Weiche Randmaske nur für OPAKE Clips (H.264-MP4 ohne Alpha-Rand): die harten
+   Video-Kanten federn rundum aus und schmelzen in die Aurora. Transparente
+   WebM-Sätze bringen ihre Alpha-Kanten selbst mit → keine Maske nötig. */
+const activeExt = (T.on ? (T.ext || 'mp4') : EXT).toLowerCase();
+const opaqueClips = activeExt !== 'webm';
+document.documentElement.dataset.videoMask = opaqueClips ? 'on' : 'off';
 
 /* ZWEI <video>-Ebenen (Doppel-Puffer): Die sichtbare Ebene (front) spielt den
    aktuellen Clip; in die verdeckte Ebene (back) wird der NÄCHSTE Clip schon vorab
