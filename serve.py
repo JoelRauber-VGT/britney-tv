@@ -83,24 +83,6 @@ def start_motion_sensor():
     threading.Thread(target=_poll_motion_loop, daemon=True).start()
     print(f"PIR-Sensor aktiv (Polling): GPIO{MOTION_PIN} -> /motion", flush=True)
 
-# ── Aktiver Video-Satz (real | pixar) ─────────────────────────────
-# vidoes/active.txt enthaelt den Namen des aktiven Ordners. Umgeschaltet wird
-# per ./switch-videos.sh; die Kiosk-Seite pollt /videoset und laedt sich bei
-# Aenderung selbst neu (Wayland-sicher, kein xdotool).
-ACTIVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           "vidoes", "active.txt")
-
-
-def read_video_set():
-    """Liest den aktiven Satz aus vidoes/active.txt; Standard 'real'."""
-    try:
-        with open(ACTIVE_FILE, "r", encoding="utf-8") as fh:
-            name = fh.read().strip()
-        return name or "real"
-    except OSError:
-        return "real"
-
-
 # .woff2 / .mjs / .mp4 / .webm sauber ausliefern (aelteren Python-Versionen fehlt das teils)
 EXTRA_TYPES = {
     ".mp4": "video/mp4",
@@ -131,11 +113,6 @@ class Handler(SimpleHTTPRequestHandler):
         if route == "/motion":
             with _motion_lock:
                 body = json.dumps({"count": _motion_count}).encode()
-            self._send_json(body)
-            return
-        # Aktiver Video-Satz (real | pixar) fuer die Seite
-        if route == "/videoset":
-            body = json.dumps({"set": read_video_set()}).encode()
             self._send_json(body)
             return
         super().do_GET()

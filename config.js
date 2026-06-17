@@ -30,29 +30,10 @@ const CONFIG = {
    * zurück auf britney_1. Eine Stufe wird ausgelöst durch PIR-Sensor,
    * Leertaste (lokaler Test) oder britney.advance() in der Konsole. */
   video: {
-    /* Standard-Ordner (Fallback). Welcher Satz WIRKLICH läuft, bestimmt
-     * vidoes/active.txt (real | pixar) – per ./switch-videos.sh umschaltbar.
-     * Die Seite fragt das beim Start vom Server ab und lädt sich bei einem
-     * Wechsel selbst neu. */
-    dir: './vidoes/real',   /* Ordner mit britney_1..N.mp4 und transition_1..N.mp4 */
-    ext: 'mp4',             /* Dateiformat der real/pixar-Sätze (opake H.264-Clips) */
-
-    /* TEST-SATZ: überschreibt den realen/pixar-Satz und lässt STATTDESSEN einen
-     * festen Ordner mit voller Stufen-Logik laufen (Stand-Loops + Transitions
-     * schalten normal durch). Dateinamen: <dir>/<name><suffix>.<ext>.
-     * on: false = aus = normaler Betrieb (real | pixar). */
-    test: {
-      on:     false,
-      dir:    '.',
-      suffix: '',
-      ext:    'mp4',
-    },
+    dir: './vidoes',     /* Ordner mit britney_1..N.mp4 und transition_1..N.mp4 (opake H.264-Clips) */
     stages: 4,           /* Anzahl Stand-Loops (britney_1 … britney_4) */
     startStage: 1,       /* womit gestartet wird */
     muted: true,         /* Kiosk läuft lautlos (muted erlaubt den Autostart) */
-    crossfadeMs: 0,      /* 0 = harter Schnitt (kein Überblenden, keine Überlappung).
-                            >0 würde beide Clips kurz per Opacity ineinanderblenden.
-                            Dank Vorpufferung blitzt auch der harte Schnitt nicht. */
     cooldownMs: 5000,    /* Sperre nach einem Auslöser: 5 s lang werden weitere
                             Bewegungen ignoriert (jemand laeuft durch + wackelt
                             gleich nochmal -> nur EIN Wechsel). 0 = keine Sperre */

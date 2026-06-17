@@ -171,21 +171,12 @@ window.britney = {
  * ════════════════════════════════════════════════════════════════ */
 
 const V = cfg.video;
-/* Beide Sätze (real | pixar) liegen als <V.dir>/<name>.<ext> (Standard: mp4 –
-   opake H.264-Clips, vom Pi 4 in Hardware dekodierbar). Test-Satz
-   (cfg.video.test.on) bleibt als manueller Override erhalten — wenn an, spielt er
-   statt real/pixar einen festen Ordner: <dir>/<name><suffix>.<ext>. */
-const T = V.test || {};
-const EXT = (V.ext || 'mp4').toLowerCase();
-const clip = (name) => T.on
-  ? `${T.dir}/${name}${T.suffix || ''}.${T.ext || 'mp4'}`
-  : `${V.dir}/${name}.${EXT}`;
-/* Weiche Randmaske nur für OPAKE Clips (H.264-MP4 ohne Alpha-Rand): die harten
-   Video-Kanten federn rundum aus und schmelzen in die Aurora. Transparente
-   WebM-Sätze bringen ihre Alpha-Kanten selbst mit → keine Maske nötig. */
-const activeExt = (T.on ? (T.ext || 'mp4') : EXT).toLowerCase();
-const opaqueClips = activeExt !== 'webm';
-document.documentElement.dataset.videoMask = opaqueClips ? 'on' : 'off';
+/* Clips liegen als <V.dir>/<name>.mp4 (opake H.264-Clips, vom Pi 4 in Hardware
+   dekodierbar). */
+const clip = (name) => `${V.dir}/${name}.mp4`;
+/* Weiche Randmaske: die harten Video-Kanten federn rundum aus und schmelzen in den
+   Hintergrund. */
+document.documentElement.dataset.videoMask = 'on';
 
 /* EINE <video>-Ebene (#vidA) + Freeze-Frame-Canvas.
    WICHTIG (Raspberry Pi): Der Pi 4 kann nur EIN Video gleichzeitig in Hardware
@@ -386,31 +377,7 @@ async function startBritney() {
     }
   }, 1500);
 }
-/* ── Aktiver Video-Satz (real | pixar) ───────────────────────────────
-   vidoes/active.txt bestimmt, welcher Ordner läuft; serve.py liefert ihn unter
-   /videoset. Wir holen ihn VOR dem Start (setzt V.dir) und pollen danach: ändert
-   ihn jemand per ./switch-videos.sh, lädt sich die Seite selbst neu (Wayland-
-   sicher, kein xdotool). Ohne Server (lokal/file://) bleibt der Wert aus config. */
-let activeSet = null;
-async function fetchVideoSet() {
-  const res = await fetch('/videoset', { cache: 'no-store' });
-  const { set } = await res.json();
-  return set;
-}
-(async function initVideoSet() {
-  try {
-    const set = await fetchVideoSet();
-    if (set) { activeSet = set; V.dir = './vidoes/' + set; }
-  } catch (_) { /* Endpunkt nicht erreichbar → V.dir aus config (Fallback) */ }
-  startBritney();
-  /* Auf Wechsel lauschen */
-  setInterval(async () => {
-    try {
-      const set = await fetchVideoSet();
-      if (activeSet && set && set !== activeSet) location.reload();
-    } catch (_) { /* still ignorieren */ }
-  }, 2000);
-})();
+startBritney();
 
 /* Öffentliche API erweitern */
 window.britney.motion  = triggerMotion;                       /* eine Bewegung (PIR/Shell/Test) */

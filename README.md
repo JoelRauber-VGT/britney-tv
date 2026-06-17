@@ -35,26 +35,7 @@ Seite neu laden: am Pi `F5` oder Strom aus/an (startet von selbst).
 
 ## Britney-Videos (Mitte)
 
-Es gibt **zwei Video-Sätze** in je einem Unterordner — umschaltbar im Betrieb:
-
-| Ordner | Inhalt |
-| --- | --- |
-| `vidoes/real/` | Realistische Videos (Standard) |
-| `vidoes/pixar/` | Pixar-/Cartoon-Variante |
-
-**Umschalten auf dem Pi** (per Shell, ohne Browser-Neustart):
-
-```bash
-./switch-videos.sh real     # realistische Videos
-./switch-videos.sh pixar    # Pixar-Videos
-./switch-videos.sh          # zeigt den aktuell aktiven Satz
-```
-
-Das schreibt nur `vidoes/active.txt`; `serve.py` liefert den Wert unter `/videoset`,
-und die Kiosk-Seite lädt sich innerhalb von ~2 s **von selbst** neu (Wayland-sicher,
-kein xdotool). Beide Ordner nutzen dieselben Dateinamen:
-
-Die Videos in jedem Satz-Ordner sind paarweise benannt:
+Die Videos liegen direkt in `vidoes/` und sind paarweise benannt:
 
 | Datei | Rolle |
 | --- | --- |
@@ -143,13 +124,12 @@ Dauerbetrieb.
 | Datei | Zweck |
 | --- | --- |
 | `config.js` | **Die einzige Datei für den Alltag** — IQ, Daten, Texte, Videos |
-| `serve.py` | Lokaler Webserver (`http://localhost:8000`) + PIR-Sensor → `/motion` + aktiver Video-Satz → `/videoset` |
+| `serve.py` | Lokaler Webserver (`http://localhost:8000`) + PIR-Sensor → `/motion` |
 | `start-kiosk.sh` | Autostart-Skript: startet Server + Chromium-Kiosk |
-| `switch-videos.sh` | Wechselt den Video-Satz: `real` ↔ `pixar` (Seite lädt sich selbst neu) |
 | `index.html` | Seitengerüst (HUD + Video- und Logo-Bühne) |
 | `app.js` | Countdown, IQ-Anzeige, Video-Steuerung, `britney`-API, Auto-Reload |
 | `tokens.css` / `style.css` | Design-Tokens und Layout |
 | `vgt.png` / `fhnw.jpg` | Logos der Forschungskooperation |
-| `vidoes/real/`, `vidoes/pixar/` | Die zwei Video-Sätze (`britney_N.mp4`, `transition_N.mp4`); aktiver Satz in `vidoes/active.txt` |
+| `vidoes/` | Die Video-Clips (`britney_N.mp4`, `transition_N.mp4`) |
 | `sensor/bs412_test.py` | PIR-Schnelltest: zeigt Pin-Pegel live an |
 | `vendor/fonts/` | Schriften, lokal eingebunden (offline-fest) |
