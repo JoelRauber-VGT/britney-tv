@@ -143,11 +143,12 @@ function showIQ(value, animate = true) {
 $('iqStart').textContent = String(cfg.iq.start);
 $('iqTarget').textContent = String(cfg.iq.target);
 
-setTimeout(() => showIQ(cfg.iq.current), 600);
+/* animate=false: kein Hochzaehlen — die Seite ist bewusst komplett statisch. */
+showIQ(cfg.iq.current, false);
 
 /* Öffentliche API — wird unten (Video-Abschnitt) noch erweitert. */
 window.britney = {
-  setIQ: (v) => { cfg.iq.current = v; showIQ(v); },
+  setIQ: (v) => { cfg.iq.current = v; showIQ(v, false); },
 };
 
 /* ════════════════════════════════════════════════════════════════

@@ -503,3 +503,19 @@ body {
   .reveal { animation: reveal-reduced 150ms linear forwards; }
   @keyframes reveal-reduced { to { opacity: 1; transform: none; } }
 }
+
+/* ── Statische Seite: ALLE Bewegung aus ──────────────────────────────
+   Bewusst global abgeschaltet (Wunsch: keinerlei Animationen). Damit sind
+   Aurora-Schleier, X-Puls, Britney-Bloom, Countdown-„breathe"/„sheen",
+   IQ-Punkt-/-Balken-Puls und die Einblende-Animation alle still — egal wie
+   sie definiert sind und unabhaengig von prefers-reduced-motion.
+   .reveal wird direkt auf seinen Endzustand gesetzt, sonst bliebe der per
+   Einblendung sichtbar gemachte Inhalt auf opacity:0 (also unsichtbar). */
+*, *::before, *::after {
+  animation: none !important;
+  transition: none !important;
+}
+.reveal {
+  opacity: 1 !important;
+  transform: none !important;
+}

@@ -71,7 +71,7 @@ const CONFIG = {
    *   'off'    – flaches Violett-Schwarz (maximal stromsparend)
    * Performance immer am ECHTEN Pi gegenchecken; bei Rucklern hier auf 'static'
    * umschalten. */
-  background: 'aurora',
+  background: 'static',
 
   kiosk: {
     /* Täglicher Auto-Reload (Stunde 0–23) gegen Browser-Memory-Drift
