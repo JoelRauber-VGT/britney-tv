@@ -41,18 +41,17 @@ body {
   pointer-events: none;
   /* eigene GPU-Ebene, isoliert vom Rest */
   contain: strict;
-  will-change: transform;
 }
 .aurora__blob {
   position: absolute;
   width: 75vmax;
   height: 75vmax;
   border-radius: 50%;
-  filter: blur(2vmax);         /* nur leichter Weichzeichner — Pi-schonend */
   opacity: 1;
-  will-change: transform, opacity;
-  transform: translateZ(0);
-  mix-blend-mode: screen;      /* Schleier addieren sich zu Licht, kein „Matsch" */
+  /* BEWUSST kein filter:blur und kein mix-blend-mode: die radialen Verläufe sind
+     von sich aus weich. Blur und Blend sind genau die Operationen, die den Pi-4-GPU
+     bremsen (müssen über das ganze 2-MP-Bild gerechnet werden) — sie brachten optisch
+     kaum etwas, kosteten aber am meisten. */
 }
 .aurora__blob--1 {
   top: -10%; left: -5%;
@@ -197,9 +196,10 @@ body {
 .stage__caption strong { color: var(--color-ink); font-weight: 600; }
 
 /* ── Mitte: Britney-Videos (PIR-getriggert) ──
-   Sitzt im freien Raum über den Logos. Zwei gestapelte <video>; sichtbar ist
-   immer das vordere (.is-front). Der kurze Crossfade beim Clip-Wechsel
-   verhindert ein schwarzes Aufblitzen zwischen Loop und Übergang. */
+   Sitzt im freien Raum über den Logos. EINE <video>-Ebene (#vidA, der Pi dekodiert
+   nur ein Video gleichzeitig in Hardware); beim Clip-Wechsel überbrückt ein Freeze-
+   Frame-Canvas das kurze Schwarz. Der weiche Rand liegt als statisches Overlay
+   (::after) darüber — siehe unten. */
 .britney {
   position: fixed;
   left: 50%;
@@ -225,9 +225,7 @@ body {
       var(--aurora-rose) 0%, transparent 70%),
     radial-gradient(ellipse 70% 65% at 50% 50%,
       var(--aurora-violet) 0%, transparent 72%);
-  filter: blur(3vmax);
-  opacity: 0.85;
-  will-change: transform, opacity;
+  opacity: 0.85;   /* kein filter:blur mehr — die Verläufe sind schon weich (Pi-schonend) */
   animation: britney-bloom 9s var(--ease-in-out) infinite;
 }
 @keyframes britney-bloom {
@@ -245,14 +243,14 @@ body {
 }
 .britney__vid.is-front { opacity: 1; }
 
-/* Weiche Randmaske NUR für opake Clips (H.264-MP4 ohne Alpha-Rand, data-video-mask
-   ="on" aus app.js): gleichmäßiger weicher Rand auf allen 4 Seiten als STATISCHE
-   Masken-Grafik (video-mask.png, weiß innen → transparent am Rand). Bewusst EINE
-   Maskenebene statt zweier per mask-composite verschnittener Verläufe: Letzteres
-   zwingt den Browser pro Frame in einen teuren Compositing-Pfad (Ruckeln auf dem
-   Pi). Die Textur dagegen wird einmal gerastert und ist quasi gratis.
-   Feather-Breite steckt in der PNG (per Skript neu erzeugbar). Transparente
-   WebM-Sätze brauchen die Maske nicht und bleiben unmaskiert. */
+/* Weiche Randmaske auf dem Video (data-video-mask="on" aus app.js): blendet die
+   harten Videokanten rundum aus, sodass das Bild WIRKLICH ins Glühen dahinter
+   auflöst (transparente Ränder → der rosa/violette Bloom scheint durch). Das geht
+   nur über eine echte Maske auf dem Video — ein Overlay würde nur einen Rahmen
+   DRÜBER malen (sichtbarer dunkler Kasten) statt die Kanten weich aufzulösen.
+   Kosten: EINE statische PNG, die pro Frame nur mit der Videotextur multipliziert
+   wird (ein Shader-Schritt, günstig). Teuer wäre nur mask-composite mit mehreren
+   Verlaufs-Masken — das nutzen wir bewusst NICHT. */
 :root[data-video-mask="on"] .britney__vid {
   -webkit-mask: url('./video-mask.png') center / 100% 100% no-repeat;
           mask: url('./video-mask.png') center / 100% 100% no-repeat;
@@ -317,7 +315,6 @@ body {
   color: var(--color-ink);
   /* „Lebt": die Zahl atmet einen warmen Marken-Glow ein und aus. Nur
      text-shadow/transform → GPU-/Pi-schonend. Stoppt bei reduced-motion. */
-  will-change: transform;
   animation: cd-breathe 5.5s var(--ease-in-out) infinite;
 }
 @keyframes cd-breathe {
@@ -357,7 +354,8 @@ body {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  mix-blend-mode: screen;
+  /* kein mix-blend-mode mehr (Blend-Pass kostet auf dem Pi); der Glanz-Sliver ist
+     bei abgeschalteter Animation ohnehin off-screen geparkt = unsichtbar. */
   background: linear-gradient(90deg,
               transparent 0%,
               oklch(98% 0.02 320 / 0.65) 50%,
