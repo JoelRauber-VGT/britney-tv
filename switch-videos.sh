@@ -31,9 +31,9 @@ if [ ! -d "vidoes/$choice" ]; then
   exit 1
 fi
 
-# Warnen, falls der Zielordner (noch) keine Videos enthaelt.
-if ! ls "vidoes/$choice"/britney_1.webm >/dev/null 2>&1; then
-  echo "Warnung: vidoes/$choice enthaelt keine britney_*.webm – Seite bliebe leer." >&2
+# Warnen, falls der Zielordner (noch) keine Videos enthaelt (egal welche Endung).
+if ! ls "vidoes/$choice"/britney_1.* >/dev/null 2>&1; then
+  echo "Warnung: vidoes/$choice enthaelt keine britney_1.* – Seite bliebe leer." >&2
 fi
 
 echo "$choice" > "$ACTIVE"
