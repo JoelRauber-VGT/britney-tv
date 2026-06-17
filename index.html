@@ -20,12 +20,10 @@
   </div>
   <div class="vignette" aria-hidden="true"></div>
 
-  <!-- Mitte: Britney-Videos. britney_N läuft im Loop, transition_N blendet
-       zur nächsten Stufe. Ausgelöst per PIR-Sensor / Leertaste / Shell.
-       Zwei gestapelte <video> für einen sauberen Crossfade (kein Schwarzblitz). -->
+  <!-- Mitte: Britney-Video. EIN Clip (britney_loop.mp4) läuft dauerhaft im
+       Loop — kein Sensor, kein Stufenwechsel. -->
   <div class="britney" id="britney" aria-hidden="true">
-    <video class="britney__vid is-front" id="vidA" muted playsinline preload="auto"></video>
-    <video class="britney__vid" id="vidB" muted playsinline preload="auto"></video>
+    <video class="britney__vid is-front" id="vidA" muted playsinline loop preload="auto"></video>
   </div>
 
   <!-- Oben: Countdown als „Tage als Held"-Stat-Block (spiegelt den IQ unten) -->

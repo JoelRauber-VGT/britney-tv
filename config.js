@@ -24,19 +24,11 @@ const CONFIG = {
     target:  180,  /* Rechtes Ende der Skala (Ziel) */
   },
 
-  /* Mitte-Videos: Britney-Avatar.
-   * Stand-Loop  britney_N  läuft endlos. Bei Bewegung spielt  transition_N
-   * einmal und blendet zu  britney_(N+1). Nach der letzten Stufe geht es
-   * zurück auf britney_1. Eine Stufe wird ausgelöst durch PIR-Sensor,
-   * Leertaste (lokaler Test) oder britney.advance() in der Konsole. */
+  /* Mitte-Video: Britney-Avatar. EIN Clip, läuft dauerhaft im Loop —
+   * kein Sensor, kein Stufenwechsel, keine Transitions. */
   video: {
-    dir: './vidoes',     /* Ordner mit britney_1..N.mp4 und transition_1..N.mp4 (opake H.264-Clips) */
-    stages: 4,           /* Anzahl Stand-Loops (britney_1 … britney_4) */
-    startStage: 1,       /* womit gestartet wird */
-    muted: true,         /* Kiosk läuft lautlos (muted erlaubt den Autostart) */
-    cooldownMs: 5000,    /* Sperre nach einem Auslöser: 5 s lang werden weitere
-                            Bewegungen ignoriert (jemand laeuft durch + wackelt
-                            gleich nochmal -> nur EIN Wechsel). 0 = keine Sperre */
+    src:   './britney_loop.mp4',  /* der Loop-Clip (opaker H.264-Clip, vom Pi 4 in Hardware dekodierbar) */
+    muted: true,                  /* Kiosk läuft lautlos (muted erlaubt den Autostart) */
   },
 
   /* Mittel-Visualisierung: Forschungskooperation VGT × FHNW.
@@ -61,13 +53,4 @@ const CONFIG = {
   },
 
   debug: false,
-
-  /* PIR-Sensor (BS412): serve.py liest GPIO4 und zählt unter /motion hoch.
-   * Die Seite pollt diese Adresse (gleicher Origin wie die Seite → kein CORS).
-   * Bei jedem neuen Zählerstand wird eine Video-Stufe weitergeschaltet.
-   * url: '' schaltet das Pollen aus (dann nur Leertaste). */
-  motion: {
-    url: '/motion',
-    pollMs: 300,
-  },
 };
