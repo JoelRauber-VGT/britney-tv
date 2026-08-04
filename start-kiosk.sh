@@ -8,8 +8,21 @@
 cd "$(dirname "$0")" || exit 1
 export DISPLAY="${DISPLAY:-:0}"
 
-# CEC-Adapter als Playback-Geraet initialisieren (noetig fuer Standby-Steuerung per Cronjob)
+# HDMI-CEC: Adapter registrieren UND den TV aktiv aufwecken.
+# WICHTIG: Das passiert hier INNERHALB der Wayland-Session (Autostart nach dem
+# 07:00-Reboot). Nur so setzt kanshi danach Aufloesung + Rotation sauber. Ein
+# separater Cron-Aufruf ausserhalb der Session weckt den TV zwar, aber ohne
+# kanshi -> falsches Bildformat. Darum gehoert das Aufwecken HIERHER, nicht in
+# die Crontab. (Die Crontab macht nur: 07:00 Reboot, 18:00/Wochenende Standby.)
 cec-ctl -d /dev/cec0 --playback 2>/dev/null || true
+# image-view-on mehrfach senden: ein TV aus tiefem Standby ueberhoert den ersten
+# Befehl gern -> sonst bleibt der Schirm morgens schwarz (genau dieser Bug).
+for _ in 1 2 3 4; do
+  cec-ctl -d /dev/cec0 --to 0 --image-view-on 2>/dev/null || true
+  sleep 2
+done
+# Eingang auf den Pi umschalten (phys. Adresse des genutzten HDMI-Ports).
+cec-ctl -d /dev/cec0 --active-source phys-addr=2.0.0.0 2>/dev/null || true
 
 # Chromium heisst je nach Raspberry-Pi-OS-Version anders
 CHROME="$(command -v chromium-browser || command -v chromium)"
