@@ -3,6 +3,7 @@
 *.sh text eol=lf
 serve.py text eol=lf
 
-# Videos sind Binaer (kein eol/diff-Murks).
+# Videos und Schriften sind Binaer (kein eol/diff-Murks).
 *.webm binary
 *.mp4 binary
+*.woff2 binary

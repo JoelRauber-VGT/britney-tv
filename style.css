@@ -1,5 +1,6 @@
 /* Britney Dashboard · 75" Hochformat-Kiosk · Raspberry Pi 4
- * Schichten: Blooms (CSS) → Logo-Bühne → HUD-Text
+ * Theme: Galaxie (Deep Space, Sternenfeld, Star-Wars-Gold)
+ * Schichten: Nebel → Milchstraße → Sterne → Video → Logo-Bühne → HUD-Text
  */
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -27,13 +28,22 @@ body {
   outline-offset: 2px;
 }
 
-/* ── Bewegter Hintergrund: „Aurora" (Aceternity-Look, rein CSS) ──
-   Drei große, weiche Farbschleier driften sehr langsam über das tiefe
-   Violett-Schwarz. Animiert wird NUR transform/opacity → läuft auf der GPU,
-   nicht der CPU, und blockiert die Video-Dekodierung auf dem Pi nicht.
-   Die radial-gradients sind an den Rändern transparent, deshalb braucht es
-   kein teures backdrop-filter/blur. */
-.aurora {
+/* ══ GALAXIE-HINTERGRUND ═══════════════════════════════════════════
+   Drei Schichten übereinander, alle rein CSS und ohne blur/blend:
+     .nebula → weiche Farbschleier (Nebel)
+     .galaxy → das diagonale Band der Milchstraße
+     .stars  → drei Sternenfeld-Ebenen
+   Sternenfeld-Trick: jede Ebene ist EIN Element mit mehreren winzigen
+   radial-gradients, die über background-size gekachelt werden. Die Kachel
+   ist bewusst groß (400–900px) und die Punkte darin unregelmäßig verteilt,
+   damit man das Raster nicht sieht. Kostet einen einzigen Paint — anders als
+   hunderte box-shadow-Sterne, die den Pi in die Knie zwingen würden. */
+
+/* ── Nebel: große, weiche Farbschleier (früher „Aurora") ──
+   Animiert wird NUR transform/opacity → läuft auf der GPU, nicht der CPU,
+   und blockiert die Video-Dekodierung auf dem Pi nicht. Die radial-gradients
+   sind an den Rändern transparent, deshalb braucht es kein teures blur. */
+.nebula {
   position: fixed;
   inset: -25%;                 /* über den Rand hinaus, damit die Blobs nie „kanten" */
   z-index: var(--z-bg);
@@ -94,19 +104,147 @@ body {
   70%      { transform: translate3d(-10vw, 12vh, 0)  scale(0.82); opacity: 0.96; }
 }
 
-/* Vignette: hält die Ränder dunkel (Textkontrast) und schließt die Aurora
-   sanft zum Violett-Schwarz hin ab. Statisch, kostet nichts. */
+/* ── Milchstraßen-Band: diagonaler, heller Staubgürtel quer durchs Bild ──
+   Ein gedrehter Streifen aus zwei Verläufen: außen weiches Blau-Violett,
+   innen ein heller Kern. Statisch, ein Paint. */
+.galaxy {
+  position: fixed;
+  inset: -30%;
+  z-index: var(--z-bg);
+  pointer-events: none;
+  transform: rotate(-24deg);
+  background:
+    /* 1) Staubbahn: bei der echten Milchstraße verdunkelt Staub die Bandmitte.
+          Bewusst sehr weich und flach (max. 30 % Deckung über einen breiten
+          Verlauf) — als harte, dunkle Kante las sich das als schwarzer Balken
+          quer durchs Bild statt als Tiefe. */
+    linear-gradient(to bottom,
+      transparent 34%,
+      oklch(3% 0.02 265 / 0.18) 44%,
+      oklch(3% 0.02 265 / 0.30) 50%,
+      oklch(3% 0.02 265 / 0.18) 56%,
+      transparent 66%),
+    /* 2) heller, schmaler Kern des Bandes (Sternenstaub) */
+    linear-gradient(to bottom,
+      transparent 40%,
+      oklch(78% 0.045 250 / 0.10) 47%,
+      oklch(88% 0.035 245 / 0.15) 50%,
+      oklch(78% 0.045 250 / 0.10) 53%,
+      transparent 60%),
+    /* 3) roter Emissionsnebel auf der einen Seite des Bandes … */
+    linear-gradient(105deg,
+      transparent 8%,
+      var(--nebula-red) 32%,
+      transparent 55%),
+    /* 4) … blauer Reflexionsnebel auf der anderen */
+    linear-gradient(105deg,
+      transparent 45%,
+      var(--nebula-blue) 72%,
+      transparent 94%),
+    /* 5) breiter, dunkler Staubhof, der beides zusammenhält */
+    linear-gradient(to bottom,
+      transparent 20%,
+      var(--nebula-deep) 50%,
+      transparent 80%);
+  /* Die farbigen Nebel (3+4) laufen quer — sie werden vom Band-Verlauf (5)
+     ohnehin nach oben/unten abgeschnitten. Zusätzlich blenden wir die Ränder
+     aus, damit das Band nicht als Balken „abgeschnitten" wirkt. */
+  -webkit-mask: radial-gradient(72% 58% at 50% 50%, #000 25%, transparent 100%);
+          mask: radial-gradient(72% 58% at 50% 50%, #000 25%, transparent 100%);
+}
+/* Sternenverdichtung IM Band: dieselbe Kachel-Technik wie beim Sternenfeld,
+   nur dichter und auf den Bandbereich maskiert — dadurch wirkt die Milchstraße
+   aus Sternen gemacht statt bloß gemalt. Ein zusätzlicher Paint. */
+.galaxy::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at  17px  29px, oklch(97% 0.01 250 / 0.9), transparent),
+    radial-gradient(1px 1px at  83px  61px, oklch(94% 0.03 250 / 0.8), transparent),
+    radial-gradient(1px 1px at 131px  19px, oklch(97% 0.01 250 / 0.7), transparent),
+    radial-gradient(1px 1px at  47px 103px, oklch(92% 0.05 30  / 0.7), transparent),
+    radial-gradient(1px 1px at 167px  89px, oklch(97% 0.01 250 / 0.8), transparent),
+    radial-gradient(1px 1px at 109px 137px, oklch(94% 0.04 250 / 0.9), transparent),
+    radial-gradient(1px 1px at 191px 151px, oklch(97% 0.01 250 / 0.6), transparent),
+    radial-gradient(1px 1px at  29px 173px, oklch(92% 0.05 30  / 0.6), transparent);
+  background-size: 210px 210px;
+  opacity: 0.75;
+  -webkit-mask: linear-gradient(to bottom, transparent 34%, #000 50%, transparent 66%);
+          mask: linear-gradient(to bottom, transparent 34%, #000 50%, transparent 66%);
+}
+
+/* ── Sternenfeld ── */
+.stars {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-bg);
+  pointer-events: none;
+  overflow: hidden;
+}
+.stars__layer {
+  position: absolute;
+  inset: -10%;
+  background-repeat: repeat;
+}
+/* Ferne Sterne: viele, klein, gedimmt */
+.stars__layer--far {
+  opacity: 0.55;
+  background-image:
+    radial-gradient(1px 1px at  27px  43px, oklch(97% 0.01 250 / 0.9), transparent),
+    radial-gradient(1px 1px at 143px  91px, oklch(95% 0.02 230 / 0.8), transparent),
+    radial-gradient(1px 1px at  61px 187px, oklch(97% 0.01 250 / 0.7), transparent),
+    radial-gradient(1px 1px at 219px 141px, oklch(94% 0.03 210 / 0.8), transparent),
+    radial-gradient(1px 1px at 178px 247px, oklch(97% 0.01 250 / 0.6), transparent),
+    radial-gradient(1px 1px at  93px 311px, oklch(93% 0.05 25 / 0.8), transparent),
+    radial-gradient(1px 1px at 289px 209px, oklch(97% 0.01 250 / 0.7), transparent),
+    radial-gradient(1px 1px at 331px  73px, oklch(95% 0.02 240 / 0.9), transparent),
+    radial-gradient(1px 1px at 247px 349px, oklch(97% 0.01 250 / 0.6), transparent),
+    radial-gradient(1px 1px at 371px 289px, oklch(96% 0.02 200 / 0.8), transparent);
+  background-size: 400px 400px;
+}
+/* Mittlere Ebene: etwas größer und heller */
+.stars__layer--mid {
+  opacity: 0.8;
+  background-image:
+    radial-gradient(1.6px 1.6px at  73px 119px, oklch(99% 0.01 250 / 0.95), transparent),
+    radial-gradient(1.6px 1.6px at 311px  57px, oklch(97% 0.03 220 / 0.9),  transparent),
+    radial-gradient(1.6px 1.6px at 187px 293px, oklch(99% 0.01 250 / 0.85), transparent),
+    radial-gradient(1.6px 1.6px at 431px 217px, oklch(93% 0.06 25  / 0.9),  transparent),
+    radial-gradient(1.6px 1.6px at 523px 401px, oklch(99% 0.01 250 / 0.9),  transparent),
+    radial-gradient(1.6px 1.6px at 109px 467px, oklch(95% 0.05 255 / 0.85), transparent),
+    radial-gradient(1.6px 1.6px at 389px 523px, oklch(99% 0.01 250 / 0.8),  transparent);
+  background-size: 620px 620px;
+}
+/* Nahe Sterne: wenige, groß, mit farbigem Hof. Echte Sterne sind entweder
+   blau (heiß) oder rot (kühl) — genau die zwei Höfe verwenden wir hier,
+   das ist die Farbdramaturgie des ganzen Himmels im Kleinen. */
+.stars__layer--near {
+  background-image:
+    radial-gradient(2.4px 2.4px at 131px 211px, oklch(99% 0.02 25 / 1), transparent),
+    radial-gradient(11px  11px  at 131px 211px, oklch(62% 0.190 25 / 0.28), transparent),
+    radial-gradient(2.4px 2.4px at 613px  97px, oklch(99% 0.01 250 / 1), transparent),
+    radial-gradient(11px  11px  at 613px  97px, oklch(65% 0.170 255 / 0.30), transparent),
+    radial-gradient(2.4px 2.4px at 397px 641px, oklch(99% 0.02 25 / 1), transparent),
+    radial-gradient(11px  11px  at 397px 641px, oklch(62% 0.190 25 / 0.22), transparent),
+    radial-gradient(2.4px 2.4px at 787px 487px, oklch(99% 0.01 250 / 1), transparent),
+    radial-gradient(11px  11px  at 787px 487px, oklch(65% 0.170 255 / 0.26), transparent);
+  background-size: 900px 900px;
+}
+
+/* Vignette: hält die Ränder dunkel (Textkontrast) und schließt das Sternenfeld
+   sanft zum Weltraum-Schwarz hin ab. Statisch, kostet nichts. */
 .vignette {
   position: fixed;
   inset: 0;
   z-index: var(--z-bg);
   pointer-events: none;
   background:
-    radial-gradient(135% 95% at 50% 40%,
-      transparent 0%, transparent 58%, var(--color-paper) 100%),
+    radial-gradient(125% 88% at 50% 42%,
+      transparent 0%, transparent 46%, var(--color-paper) 96%),
     linear-gradient(to bottom,
-      oklch(8% 0.02 315 / 0.40) 0%, transparent 20%,
-      transparent 80%, oklch(8% 0.02 315 / 0.50) 100%);
+      oklch(3% 0.02 265 / 0.62) 0%, transparent 22%,
+      transparent 78%, oklch(3% 0.02 265 / 0.70) 100%);
 }
 
 /* „static": fester Glow statt Animation (Pi-Notbremse via config.js) */
@@ -115,8 +253,11 @@ body {
 :root[data-bg="static"] .aurora__blob--2 { transform: translate3d(-6vw, -4vh, 0) scale(1.15); }
 :root[data-bg="static"] .aurora__blob--3 { transform: translate3d(6vw, -4vh, 0) scale(1.05); }
 
-/* „off": komplett flaches Violett-Schwarz */
-:root[data-bg="off"] .aurora,
+/* „off": Nebel und Milchstraßenband weg — nur noch Sternenfeld auf flachem
+   Weltraum-Schwarz. Die Sterne bleiben bewusst drin: ein einziger statischer
+   Paint, der nichts kostet, aber das Galaxie-Thema trägt. */
+:root[data-bg="off"] .nebula,
+:root[data-bg="off"] .galaxy,
 :root[data-bg="off"] .vignette { display: none; }
 
 /* ── Mitte: Forschungskooperation VGT × FHNW ──
@@ -171,15 +312,17 @@ body {
   filter: brightness(0) invert(1);
 }
 
-/* Das verbindende × — Signal-Orange mit Glow, leichtes Pulsieren */
+/* Das verbindende × — schlicht weiß wie die Logos daneben, nur ein
+   dezenter Halo. Farbe würde hier mit den beiden Marken konkurrieren. */
 .collab__x {
   flex: 0 0 auto;
   font-family: var(--font-display);
   font-weight: 200;
   font-size: clamp(3rem, 10vw, 10rem);
   line-height: 1;
-  color: var(--color-accent);
-  text-shadow: 0 0 4vh oklch(65% 0.187 15 / 0.5);
+  color: var(--color-ink);
+  text-shadow: 0 0 3vh oklch(99% 0.010 250 / 0.30),
+               0 0 1vh oklch(92% 0.045 220 / 0.22);
   animation: x-pulse 3.4s var(--ease-in-out) infinite;
 }
 @keyframes x-pulse {
@@ -193,7 +336,13 @@ body {
   font-size: var(--text-qualifier);
   color: var(--color-ink-2);
 }
-.stage__caption strong { color: var(--color-ink); font-weight: 600; }
+/* Der Projektname bekommt die Chromschrift (siehe .chrome-Gruppe oben),
+   der Rest der Zeile bleibt Ubuntu — lesbar aus 3 m Distanz. */
+.stage__caption strong {
+  font-size: 1.2em;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
 
 /* ── Mitte: Britney-Videos (PIR-getriggert) ──
    Sitzt im freien Raum über den Logos. EINE <video>-Ebene (#vidA, der Pi dekodiert
@@ -273,7 +422,7 @@ body {
 
 .label {
   margin: 0;
-  font-family: var(--font-body);
+  font-family: var(--font-display);
   font-size: var(--text-label);
   font-weight: 400;
   letter-spacing: 0.22em;
@@ -290,7 +439,7 @@ body {
 
 .phase {
   margin: 0;
-  font-family: var(--font-body);
+  font-family: var(--font-display);
   font-size: calc(var(--text-label) * 0.82);
   font-weight: 400;
   letter-spacing: 0.22em;
@@ -307,12 +456,47 @@ body {
   text-align: center;
   gap: var(--space-sm);
 }
+/* ── „GALAXY"-Chromschrift ────────────────────────────────────────
+   Der Look der Vorlage in unseren Blautönen: schwere kondensierte Versalien,
+   deutlich nach rechts geneigt, Metallic-Verlauf mit hartem Horizont, dunkle
+   Trennkante und darum eine helle Konturlinie, plus Lichthof.
+
+   Technik: der Verlauf wird per background-clip in die Glyphen geschnitten
+   (color: transparent). Kontur und Halo kommen über filter: drop-shadow —
+   text-shadow ginge hier NICHT, weil der Schatten durch die transparente
+   Füllung hindurchscheinen und die Buchstaben zukleistern würde.
+   drop-shadows wirken nacheinander auf das jeweilige Zwischenergebnis: erst
+   legt sich ein dunkler Saum um die Glyphe, DANN eine helle Linie um diesen
+   Saum. Genau daher der geschichtete Ring der Vorlage (Füllung → dunkle
+   Kante → helle Kontur). Alles statisch: einmal rastern, danach kostenlos. */
+.chrome,
+.countdown__figure,
+.iq__figure,
+.stage__caption strong {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-weight: 400;
+  transform: skewX(-12deg);       /* Anton hat keinen echten Kursivschnitt */
+  color: transparent;
+  background: var(--chrome-fill);
+  -webkit-background-clip: text;
+          background-clip: text;
+  filter:
+    /* 1) dunkle Trennkante direkt an der Glyphe */
+    drop-shadow(0 0 0.008em oklch(18% 0.060 260))
+    drop-shadow(0 0 0.008em oklch(18% 0.060 260))
+    /* 2) helle Konturlinie außen um diese Kante herum */
+    drop-shadow(0 0 0.012em var(--chrome-rim))
+    drop-shadow(0 0 0.012em var(--chrome-rim))
+    /* 3) Lichthof, der die Schrift ins Sternenfeld einbettet */
+    drop-shadow(0 0 0.28em oklch(72% 0.150 235 / 0.55));
+}
+
 .countdown__figure {
   font-family: var(--font-numeric);
   font-size: var(--text-count);
-  font-weight: 500;
-  line-height: 0.92;
-  color: var(--color-ink);
+  letter-spacing: 0.015em;
+  line-height: 1.02;              /* Anton hat sehr hohe Versalien */
   /* „Lebt": die Zahl atmet einen warmen Marken-Glow ein und aus. Nur
      text-shadow/transform → GPU-/Pi-schonend. Stoppt bei reduced-motion. */
   animation: cd-breathe 5.5s var(--ease-in-out) infinite;
@@ -331,7 +515,7 @@ body {
 }
 .countdown__label {
   margin: 0;
-  font-family: var(--font-body);
+  font-family: var(--font-display);
   font-size: var(--text-unit);
   font-weight: 400;
   letter-spacing: 0.2em;
@@ -371,12 +555,12 @@ body {
   100% { background-position: 145% 0; }   /* kurze Ruhe, dann wieder */
 }
 
-/* Feste, gleich breite Ziffern-Slots → ruhige Zahlen auch ohne
-   Tabellenziffern in der Serife (jede Ziffer sitzt zentriert in 0.7em). */
+/* Feste, gleich breite Ziffern-Slots. Anton ist stark kondensiert, daher
+   deutlich schmalere Slots als bei der früheren Serife. */
 .countdown__figure .dig,
 .iq__figure .dig {
   display: inline-block;
-  width: 0.7em;
+  width: 0.56em;
   text-align: center;
 }
 
@@ -403,12 +587,12 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 999px;
-  background: var(--brand-gradient);   /* VGT Koralle→Rosé */
+  background: var(--brand-gradient);   /* Cyan → Sternenweiß → Violett */
   transform: scaleX(0);             /* skaliert statt width — GPU-freundlich */
   transform-origin: left;
-  /* leuchtender Balken — vertikaler Glow-Hof im Markenton */
-  box-shadow: 0 0 0.9vh oklch(65% 0.20 15 / 0.75),
-              0 0 0.35vh oklch(70% 0.16 36 / 0.7);
+  /* leuchtender Balken — kühler Glow-Hof */
+  box-shadow: 0 0 0.9vh oklch(80% 0.130 210 / 0.70),
+              0 0 0.35vh oklch(92% 0.045 220 / 0.60);
 }
 .track__dot {
   position: absolute;
@@ -419,10 +603,10 @@ body {
   transform: translate(-50%, -50%);
   background: var(--color-accent);
   border-radius: 50%;
-  /* glühender Schieberegler-Punkt — pulsiert (atmet) */
-  box-shadow: 0 0 1.6vh oklch(65% 0.20 15 / 0.95),
-              0 0 0.6vh oklch(70% 0.16 36 / 0.85),
-              0 0 0.2vh oklch(96% 0.02 320 / 0.9);
+  /* glühender Schieberegler-Punkt — ein heller Stern auf der Skala */
+  box-shadow: 0 0 1.6vh oklch(80% 0.130 210 / 0.90),
+              0 0 0.6vh oklch(92% 0.045 220 / 0.80),
+              0 0 0.2vh oklch(99% 0.010 250 / 0.95);
   animation: iq-dot-pulse 2.6s var(--ease-in-out) infinite;
 }
 
@@ -463,8 +647,8 @@ body {
 .iq__figure {
   font-family: var(--font-numeric);
   font-size: var(--text-iq);
-  font-weight: 500;
-  line-height: 0.86;
+  letter-spacing: 0.015em;
+  line-height: 0.95;
 }
 .iq__meta {
   flex: 1;

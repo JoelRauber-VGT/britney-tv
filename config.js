@@ -38,10 +38,10 @@ const CONFIG = {
     caption: 'Gemeinsames KI-Forschungsprojekt »Britney«',
   },
 
-  /* Bewegter Hintergrund (Aceternity-„Aurora"-Look, rein CSS auf der GPU):
-   *   'aurora' – langsam fließende Farbschleier (Standard, edel & lebendig)
-   *   'static' – fester Glow ohne Animation (falls der Pi doch ruckelt)
-   *   'off'    – flaches Violett-Schwarz (maximal stromsparend)
+  /* Galaxie-Hintergrund (Sternenfeld + Milchstraßenband + Nebel, rein CSS):
+   *   'aurora' – Nebelschleier ziehen langsam durchs Sternenfeld
+   *   'static' – Nebel stehen fest, keine Bewegung (falls der Pi ruckelt)
+   *   'off'    – nur Sternenfeld auf flachem Weltraum-Schwarz (stromsparend)
    * Performance immer am ECHTEN Pi gegenchecken; bei Rucklern hier auf 'static'
    * umschalten. */
   background: 'static',

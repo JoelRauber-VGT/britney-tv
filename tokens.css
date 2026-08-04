@@ -1,7 +1,7 @@
 /* Hallmark · pre-emit critique: P5 H4 E5 S4 R5 V5 */
 /* Hallmark · macrostructure: Stat-Led (Kiosk-Adaption, single viewport) · kein Nav/Footer (Kiosk)
- * theme: custom · vibe: "Nachtlabor, violett, VGT Koralle→Rosé" · paper: oklch(9% 0.02 315) · accent: oklch(65% 0.187 15)
- * display: Geist Mono 600 (Daten-Display: Countdown, IQ, Labels) · body: Geist 400 · axes: dark / mono / warm
+ * theme: custom · vibe: "Galaxie, tiefdunkel, Milchstraße blau × rot" · paper: oklch(4% 0.022 265) · accent: oklch(80% 0.13 210)
+ * display: Fraunces 500 (Daten-Display: Countdown, IQ) · body: Ubuntu 300/400 · axes: dark / mono / cool
  * contrast: pass (46–50) · nav: none (Kiosk) · footer: none (Kiosk) · slop: pass (51–55)
  * honest: pass (56) · chrome: pass (57) · tokens: pass (58) · responsive: pass (59) · icons: pass (60) · mobile: pass (36, 59, 61–69)
  * studied: no · context: user-provided · genre: atmospheric · enrichment: interactive WebGL bust + 2 blooms
@@ -46,40 +46,85 @@
   font-weight: 500;
   font-display: swap;
 }
+/* Display-Schrift für die „GALAXY"-Optik: Anton (SIL OFL) — schwer, stark
+   kondensiert, Versalhöhe. Die Kursive wird per skewX erzeugt (Anton hat
+   keinen echten Kursivschnitt); das entspricht der Vorlage. */
+@font-face {
+  font-family: "Anton";
+  src: url("./vendor/fonts/anton-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
 
 :root {
-  /* ── Farbe · tiefes Violett-Schwarz, VGT-Marke (Koralle→Rosé) als Akzent ──
-     Die Avatar-Videos sind durchgehend violett/magenta mit rosa Glow; das
-     Rosé-Ende der VGT-Marke verbindet Dashboard und Bildwelt zu einem Bild. */
-  --color-paper:    oklch(9% 0.020 315);    /* tiefes Violett-Schwarz statt reinem Schwarz */
-  --color-paper-2:  oklch(15% 0.030 312);
-  --color-paper-3:  oklch(21% 0.038 310);
-  --color-ink:      oklch(94% 0.012 320);   /* warmes Off-White (kein Knallweiß) */
-  --color-ink-2:    oklch(76% 0.020 320);
-  --color-muted:    oklch(64% 0.028 322);
-  --color-rule:     oklch(34% 0.040 322);
-  --color-rule-2:   oklch(26% 0.034 318);
+  /* ── Farbe · Galaxie ──────────────────────────────────────────────
+     Tiefes Weltraum-Blauschwarz als Grund, Sternen-Weiß als Schrift,
+     das ikonische Star-Wars-Gelb (#FFE81F) als Leitakzent, Nebel in
+     Violett/Cyan als Tiefe. Die violetten Britney-Videos sitzen darin
+     wie ein Nebel im Sternenfeld. */
+  --color-paper:    oklch(4% 0.022 265);    /* fast schwarzer Weltraum */
+  --color-paper-2:  oklch(9% 0.035 268);
+  --color-paper-3:  oklch(14% 0.045 270);
+  --color-ink:      oklch(96% 0.008 250);   /* Sternen-Weiß, minimal kühl */
+  --color-ink-2:    oklch(80% 0.020 255);
+  --color-muted:    oklch(66% 0.030 258);
+  --color-rule:     oklch(36% 0.055 265);
+  --color-rule-2:   oklch(26% 0.045 265);
 
-  /* VGT-Markenverlauf: Koralle (#EF7655) → Rosé (#EA526A) */
+  /* Leitfarben der Galaxie: Eisblau/Cyan statt Gelb.
+     Das Star-Wars-Zitat liegt bewusst NUR in der Schrift — die Farbe bleibt
+     kühl (Sternenlicht), weil flächiges Gelb auf dem Panel billig wirkt.
+     --star-gold ist nur noch der winzige Halo einzelner Sterne am Himmel. */
+  --star-ice:       oklch(92% 0.045 220);   /* helles Sternenlicht-Blauweiß */
+  --star-cyan:      oklch(80% 0.130 210);   /* Nebel-Cyan — Hauptakzent */
+  --star-violet:    oklch(62% 0.170 300);   /* Nebel-Violett */
+  --star-gold:      oklch(90% 0.175 100);   /* nur für Sternenhöfe im Hintergrund */
+
+  /* VGT-Markenverlauf bleibt als Sekundär-Signal erhalten */
   --brand-coral:    oklch(70% 0.157 36);
   --brand-rose:     oklch(65% 0.187 15);
-  --brand-gradient: linear-gradient(100deg, var(--brand-coral), var(--brand-rose));
+  --brand-gradient: linear-gradient(100deg, var(--star-cyan), var(--star-ice) 55%, var(--star-violet));
 
-  --color-accent:   var(--brand-rose);      /* Hauptakzent — aus der Marke */
-  --color-accent-2: oklch(66% 0.150 330);   /* Magenta/Violett — Brücke zu den Videos (Tracks) */
-  --color-focus:    oklch(72% 0.190 18);
+  --color-accent:   var(--star-cyan);       /* Hauptakzent — Nebel-Cyan */
+  --color-accent-2: var(--star-violet);     /* Sekundär — Nebel-Violett */
+  --color-focus:    var(--star-cyan);
 
-  /* Aurora-Farben (transparente Verläufe für den bewegten Hintergrund) */
-  --aurora-rose:    oklch(60% 0.180 18 / 0.40);
-  --aurora-coral:   oklch(66% 0.150 38 / 0.28);
-  --aurora-violet:  oklch(52% 0.150 320 / 0.42);
-  --aurora-magenta: oklch(56% 0.170 350 / 0.34);
+  /* Nebel-Farben: der Himmel steht auf Blau gegen Rot — wie echte
+     Emissionsnebel (H-alpha rot) neben Reflexionsnebeln (blau). Bewusst
+     niedrige Deckkraft, damit der Grund tiefschwarz bleibt.
+     Namen bleiben --aurora-*, damit bestehende Regeln weiter greifen. */
+  --nebula-blue:    oklch(44% 0.160 258 / 0.30);   /* tiefes Kobaltblau */
+  --nebula-red:     oklch(44% 0.175 25  / 0.22);   /* H-alpha-Rot */
+  --nebula-deep:    oklch(28% 0.120 285 / 0.34);   /* dunkler Blauviolett-Staub */
 
-  /* ── Typografie ── */
-  --font-display: "Ubuntu", ui-sans-serif, system-ui, sans-serif;
+  --aurora-rose:    var(--nebula-red);
+  --aurora-coral:   oklch(55% 0.150 20 / 0.16);
+  --aurora-violet:  var(--nebula-deep);
+  --aurora-magenta: var(--nebula-blue);
+
+  /* ── Typografie ──
+     Display/Zahlen tragen den „GALAXY"-Look (Anton, schwer & kondensiert),
+     Fließtext bleibt Ubuntu — in Anton wäre er auf 3 m Distanz unlesbar. */
+  --font-display: "Anton", "Ubuntu", ui-sans-serif, system-ui, sans-serif;
   --font-body:    "Ubuntu", ui-sans-serif, system-ui, sans-serif;
   --font-mono:    "Geist Mono", ui-monospace, monospace;
-  --font-numeric: "Fraunces", Georgia, "Times New Roman", serif;  /* große Zahlen */
+  --font-numeric: "Anton", "Ubuntu", ui-sans-serif, system-ui, sans-serif;  /* große Zahlen */
+
+  /* „GALAXY"-Chrom in unseren Blautönen statt Gold.
+     Der Verlauf ist bewusst hart gestuft — echtes Chrom hat eine scharfe
+     Hell-Dunkel-Kante auf halber Höhe (der „Horizont", der sich im Metall
+     spiegelt), nicht einen weichen Verlauf. Genau das macht die Vorlage. */
+  --chrome-fill: linear-gradient(180deg,
+                   oklch(62% 0.120 245) 0%,     /* dunkle Oberkante */
+                   oklch(97% 0.020 240) 14%,    /* Lichtkante */
+                   oklch(88% 0.060 225) 44%,
+                   oklch(45% 0.110 250) 49.5%,  /* harter Horizont */
+                   oklch(52% 0.120 248) 50.5%,
+                   oklch(92% 0.050 220) 58%,    /* Aufhellung darunter */
+                   oklch(99% 0.010 250) 78%,
+                   oklch(70% 0.110 240) 100%);  /* dunkle Unterkante */
+  --chrome-rim:   oklch(88% 0.075 225);   /* helle Konturlinie außen */
+  --chrome-glow:  oklch(72% 0.150 235);   /* Lichthof */
 
   /* Größen in vw — skaliert identisch auf 1080×1920 und 2160×3840 */
   --text-label:     clamp(0.9rem, 1.9vw, 2.6rem);

@@ -10,13 +10,23 @@
 </head>
 <body>
 
-  <!-- Bewegter Hintergrund (Aceternity-„Aurora"-Look, rein CSS/GPU).
-       Drei langsam driftende Farbschleier + Vignette. Über config.js
-       (background: 'aurora' | 'static' | 'off') am Pi umschaltbar. -->
-  <div class="aurora" aria-hidden="true">
+  <!-- Galaxie-Hintergrund, rein CSS/GPU:
+       1) .nebula — drei weiche Nebelschleier (Blau / Rot / Blauviolett)
+       2) .galaxy — das Band der Milchstraße mit dunkler Staubbahn, rotem
+          Emissions- und blauem Reflexionsnebel, diagonal über die Szene
+       3) .stars  — drei Sternenfeld-Ebenen (fern/mittel/nah) aus gekachelten
+          Radial-Gradients: EIN Element pro Ebene, ein Paint, Pi-tauglich.
+       Über config.js (background: 'aurora' | 'static' | 'off') umschaltbar. -->
+  <div class="nebula" aria-hidden="true">
     <span class="aurora__blob aurora__blob--1"></span>
     <span class="aurora__blob aurora__blob--2"></span>
     <span class="aurora__blob aurora__blob--3"></span>
+  </div>
+  <div class="galaxy" aria-hidden="true"></div>
+  <div class="stars" aria-hidden="true">
+    <span class="stars__layer stars__layer--far"></span>
+    <span class="stars__layer stars__layer--mid"></span>
+    <span class="stars__layer stars__layer--near"></span>
   </div>
   <div class="vignette" aria-hidden="true"></div>
 
