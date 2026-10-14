@@ -37,6 +37,11 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 # wie der bewaehrte Hardware-Test sensor/bs412_test.py. Der frueher genutzte
 # Event-Callback (when_activated) feuert auf dem Pi (gpiozero/lgpio) nicht
 # zuverlaessig; das Polling hat dagegen nachweislich funktioniert.
+# Der Sensor trieb nur die alten Video-Stufen. Seit der Mitte-Umstellung auf
+# News/Dauerloop ist er standardmaessig AUS. Wieder einschalten:
+#   BRITNEY_MOTION=1 python3 serve.py
+# /motion bleibt immer erreichbar (start-kiosk.sh prueft damit, ob der Server laeuft).
+MOTION_ENABLED = os.getenv("BRITNEY_MOTION", "0") == "1"
 MOTION_PIN = 4
 MOTION_PULL_UP = False
 MOTION_POLL_S = 0.02      # 20 ms - wie im Hardware-Test
@@ -70,6 +75,9 @@ def start_motion_sensor():
     """Startet den PIR-Sensor, falls GPIO/gpiozero verfuegbar sind.
     Auf einem Entwicklungs-PC ohne GPIO wird still uebersprungen."""
     global _sensor
+    if not MOTION_ENABLED:
+        print("PIR-Sensor aus (BRITNEY_MOTION != 1).", flush=True)
+        return
     try:
         from gpiozero import DigitalInputDevice
     except Exception:
@@ -89,6 +97,8 @@ EXTRA_TYPES = {
     ".webm": "video/webm",
     ".woff2": "font/woff2",
     ".mjs": "text/javascript",
+    ".webp": "image/webp",
+    ".svg": "image/svg+xml",
 }
 
 # Grosse Mediendateien duerfen vom Browser gecacht werden (kein Re-Download beim

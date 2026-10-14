@@ -33,42 +33,28 @@ britney.setIQ(85);
 
 Seite neu laden: am Pi `F5` oder Strom aus/an (startet von selbst).
 
-## Britney-Videos (Mitte)
+## Mitte: News-Widget
 
-Die Videos liegen direkt in `vidoes/` und sind paarweise benannt:
+Standardmässig zeigt die Mitte rotierende Karten mit kuratierten **KI- und
+Energie-News** (`center: 'news'` in `config.js`). Jede Karte enthält ein generiertes
+Bild, eine Kategorie, die Headline, eine kurze Zusammenfassung, die Quelle und
+einen QR-Code zum Originalartikel.
 
-| Datei | Rolle |
-| --- | --- |
-| `britney_1.mp4` … `britney_4.mp4` | Stand-Loops — laufen endlos, bis Bewegung kommt |
-| `transition_1.mp4` … `transition_4.mp4` | Übergang von `britney_N` zu `britney_(N+1)` |
+- Die Daten liefert `news_pipeline/` (Python, per Cron alle 3 h) nach
+  `data/news.json`. Setup, Cron und Kosten stehen in `news_pipeline/README.md`.
+- Einstellungen in `config.js` → `news`: Anzeigedauer (`rotateSeconds`, 18 s),
+  Reload-Intervall (`reloadMinutes`, 10 min), «Neu»-Badge (`newHours`, 6 h).
+- Fehlt `news.json` oder ist sie kaputt, bleiben die letzten Daten stehen. Ganz
+  ohne Daten zeigt das Widget einen ruhigen Platzhalter.
+- Test in der Browser-Konsole: `britney.nextNews()`.
 
-**Ablauf:** `britney_1` läuft im Loop → Bewegung → `transition_1` spielt einmal
-→ `britney_2` läuft im Loop → Bewegung → `transition_2` … Nach `transition_4`
-geht es zurück auf `britney_1`. Die Anzahl der Stufen steuert
-`video.stages` in `config.js`.
+**Zurück zum Britney-Video:** `center: 'video'` in `config.js` → `britney_loop.mp4`
+läuft wieder im Loop.
 
-Möchtet ihr mehr/weniger Stufen, einfach Dateien `britney_N` / `transition_N`
-ergänzen bzw. entfernen und `video.stages` anpassen.
-
-## Bewegungssensor & Steuerung über die Shell
-
-Eine Stufe wird auf zwei Wegen ausgelöst — beide laufen über denselben Pfad
-(`window.britney.motion()`):
-
-- **PIR-Sensor (BS412):** `serve.py` liest GPIO4 selbst und zählt jede Bewegung
-  unter `/motion` hoch; die Seite pollt das und schaltet weiter. Kein xdotool,
-  kein separater Prozess, **funktioniert auch unter Wayland**. Pin/Pegel mit
-  `sensor/bs412_test.py` prüfen; die Werte stehen in `serve.py`
-  (`MOTION_PIN`, `MOTION_PULL_UP`). Details: `sensor/README.md`.
-
-- **Browser-Konsole / lokaler Test:** Leertaste drücken oder
-
-  ```js
-  britney.motion();    // eine Stufe weiter (entprellt, wie der Sensor)
-  britney.advance();   // sofort weiter (ohne Entprellung)
-  britney.reset();     // zurück auf britney_1
-  britney.stage();     // aktuelle Stufe abfragen
-  ```
+**PIR-Sensor:** trieb nur die früheren Video-Stufen und ist jetzt standardmässig
+aus. Der Code in `serve.py` ist erhalten; einschalten mit
+`BRITNEY_MOTION=1 python3 serve.py`. `/motion` antwortet immer (das Start-Skript
+prüft damit, ob der Server läuft).
 
 ## Start über localhost
 
@@ -112,9 +98,7 @@ sudo raspi-config   # → Display Options → Screen Blanking → Off
 
 `start-kiosk.sh` startet Webserver und Chromium-Kiosk und schreibt Logs nach
 `/tmp/britney-serve.log` und `/tmp/britney-chromium.log` — bei Problemen
-zuerst dort nachsehen. Der **PIR-Sensor läuft im Server mit** (`serve.py`
-liest GPIO4 und stellt ihn unter `/motion` bereit) — kein xdotool, kein
-separater Sensor-Prozess, funktioniert auch unter Wayland.
+zuerst dort nachsehen.
 
 Täglicher Auto-Reload um 4 Uhr (`kiosk.dailyReloadHour`) gegen Memory-Drift im
 Dauerbetrieb.
@@ -123,13 +107,16 @@ Dauerbetrieb.
 
 | Datei | Zweck |
 | --- | --- |
-| `config.js` | **Die einzige Datei für den Alltag** — IQ, Daten, Texte, Videos |
-| `serve.py` | Lokaler Webserver (`http://localhost:8000`) + PIR-Sensor → `/motion` |
+| `config.js` | **Die einzige Datei für den Alltag** — IQ, Daten, Texte, Mitte (News/Video) |
+| `serve.py` | Lokaler Webserver (`http://localhost:8000`), optional PIR-Sensor → `/motion` |
 | `start-kiosk.sh` | Autostart-Skript: startet Server + Chromium-Kiosk |
-| `index.html` | Seitengerüst (HUD + Video- und Logo-Bühne) |
-| `app.js` | Countdown, IQ-Anzeige, Video-Steuerung, `britney`-API, Auto-Reload |
+| `index.html` | Seitengerüst (HUD + News-/Video-Mitte + Logo-Bühne) |
+| `app.js` | Countdown, IQ-Anzeige, Video (bei `center: 'video'`), `britney`-API, Auto-Reload |
+| `news.js` | News-Widget: Rotation, Crossfade, Reload, Fallback |
+| `news_pipeline/` | Python-Job: Feeds → LLM-Kuratierung → Bilder/QR → `data/news.json` |
+| `data/` | Generierter News-Output (nicht im Git) |
 | `tokens.css` / `style.css` | Design-Tokens und Layout |
 | `vgt.png` / `fhnw.jpg` | Logos der Forschungskooperation |
-| `vidoes/` | Die Video-Clips (`britney_N.mp4`, `transition_N.mp4`) |
+| `britney_loop.mp4` | Der Britney-Loop (nur bei `center: 'video'`) |
 | `sensor/bs412_test.py` | PIR-Schnelltest: zeigt Pin-Pegel live an |
 | `vendor/fonts/` | Schriften, lokal eingebunden (offline-fest) |

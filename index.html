@@ -20,10 +20,30 @@
   </div>
   <div class="vignette" aria-hidden="true"></div>
 
-  <!-- Mitte: Britney-Video. EIN Clip (britney_loop.mp4) läuft dauerhaft im
-       Loop — kein Sensor, kein Stufenwechsel. -->
+  <!-- Mitte: News-Widget (Standard) ODER Britney-Video — umschaltbar über
+       config.js (center: 'news' | 'video'). Das jeweils andere wird entfernt. -->
+  <section class="news" id="news" aria-label="KI- und Energie-News" aria-live="off">
+    <article class="news__card" data-layer="a">
+      <div class="news__media"><img class="news__img" alt="" decoding="async"></div>
+      <div class="news__body">
+        <div class="news__meta">
+          <span class="news__pill"></span>
+          <span class="news__badge">Neu</span>
+          <span class="news__pos"></span>
+        </div>
+        <h2 class="news__title"></h2>
+        <p class="news__summary"></p>
+        <div class="news__foot">
+          <p class="news__src"><span class="news__source"></span><span class="news__time"></span></p>
+          <figure class="news__qr"><img alt="" decoding="async"><figcaption>Artikel lesen</figcaption></figure>
+        </div>
+      </div>
+    </article>
+    <div class="news__progress" aria-hidden="true"><div class="news__progress-fill"></div></div>
+  </section>
+
   <div class="britney" id="britney" aria-hidden="true">
-    <video class="britney__vid is-front" id="vidA" muted playsinline loop preload="auto"></video>
+    <video class="britney__vid is-front" id="vidA" muted playsinline loop preload="none"></video>
   </div>
 
   <!-- Oben: Countdown als „Tage als Held"-Stat-Block (spiegelt den IQ unten) -->
@@ -69,6 +89,7 @@
 
   <script src="./config.js"></script>
   <script src="./app.js"></script>
+  <script src="./news.js"></script>
 
 </body>
 </html>

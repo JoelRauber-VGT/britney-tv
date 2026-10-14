@@ -24,6 +24,20 @@ const CONFIG = {
     target:  180,  /* Rechtes Ende der Skala (Ziel) */
   },
 
+  /* Was steht in der Mitte?
+   *   'news'  – rotierende KI-/Energie-News (Daten aus news_pipeline/)
+   *   'video' – der Britney-Loop (siehe video unten) */
+  center: 'news',
+
+  /* News-Widget (nur bei center: 'news') */
+  news: {
+    src: './data/news.json',  /* von news_pipeline geschrieben; Bilder/QR relativ dazu */
+    rotateSeconds: 18,        /* Anzeigedauer pro Karte */
+    fadeMs: 1200,             /* weicher Crossfade zwischen Karten */
+    reloadMinutes: 10,        /* news.json neu laden (übernommen beim nächsten Wechsel) */
+    newHours: 6,              /* «Neu»-Badge für Meldungen jünger als X Stunden */
+  },
+
   /* Mitte-Video: Britney-Avatar. EIN Clip, läuft dauerhaft im Loop —
    * kein Sensor, kein Stufenwechsel, keine Transitions. */
   video: {

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1536 1024" preserveAspectRatio="xMidYMid slice">
+<defs>
+<radialGradient id="a" cx="30%" cy="38%" r="55%"><stop offset="0" stop-color="#ea526a" stop-opacity=".75"/><stop offset="1" stop-color="#ea526a" stop-opacity="0"/></radialGradient>
+<radialGradient id="b" cx="74%" cy="58%" r="50%"><stop offset="0" stop-color="#9b4bd0" stop-opacity=".6"/><stop offset="1" stop-color="#9b4bd0" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="1536" height="1024" fill="#120a14"/>
+<rect width="1536" height="1024" fill="url(#a)"/>
+<rect width="1536" height="1024" fill="url(#b)"/>
+<path d="M0 820 C 520 480, 900 860, 1536 480" transform="translate(0 -160)" stroke="#ea526a" stroke-opacity="0.10" stroke-width="2" fill="none"/><path d="M0 820 C 520 480, 900 860, 1536 480" transform="translate(0 -100)" stroke="#ea526a" stroke-opacity="0.15" stroke-width="2" fill="none"/><path d="M0 820 C 520 480, 900 860, 1536 480" transform="translate(0 -50)" stroke="#ea526a" stroke-opacity="0.20" stroke-width="2" fill="none"/><path d="M0 820 C 520 480, 900 860, 1536 480" transform="translate(0 0)" stroke="#ea526a" stroke-opacity="0.25" stroke-width="2" fill="none"/><path d="M0 820 C 520 480, 900 860, 1536 480" transform="translate(0 40)" stroke="#ea526a" stroke-opacity="0.30" stroke-width="2" fill="none"/>
+</svg>

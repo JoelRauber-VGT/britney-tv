@@ -163,12 +163,17 @@ window.britney = {
  * ════════════════════════════════════════════════════════════════ */
 
 const V = cfg.video;
+const videoMode = cfg.center === 'video';
+
+/* Nicht genutzte Mitte komplett aus dem DOM nehmen (kein Dekodieren im Hintergrund). */
+if (videoMode) { const n = $('news'); if (n) n.remove(); }
+else { const b = $('britney'); if (b) b.remove(); }
 
 /* Weiche Randmaske: die harten Video-Kanten federn rundum aus und schmelzen in den
    Hintergrund. */
-document.documentElement.dataset.videoMask = 'on';
+if (videoMode) document.documentElement.dataset.videoMask = 'on';
 
-const vid  = $('vidA');
+const vid  = videoMode ? $('vidA') : null;
 const vid2 = $('vidB');                 /* zweite Ebene wird nicht mehr gebraucht */
 if (vid2) { try { vid2.pause(); } catch (_) {} vid2.removeAttribute('src'); vid2.remove(); }
 

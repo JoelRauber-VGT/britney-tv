@@ -1,0 +1,34 @@
+# Feed-Quellen der News-Pipeline.
+# kind: ai | energy  ·  weight: multipliziert den LLM-Score beim Ranking
+sources:
+  - name: The Decoder
+    url: https://the-decoder.de/feed/
+    kind: ai
+    weight: 1.2
+  - name: pv magazine
+    url: https://www.pv-magazine.de/feed/
+    kind: energy
+    weight: 1.0
+  - name: Clean Energy Wire
+    url: https://www.cleanenergywire.org/rss.xml
+    kind: energy
+    weight: 1.0
+  - name: Utility Dive
+    url: https://www.utilitydive.com/feeds/news/
+    kind: energy
+    weight: 0.9
+  # Geprüft, liefert 404:
+  # - name: Clean Energy Wire (News)
+  #   url: https://www.cleanenergywire.org/news/feed
+  #   kind: energy
+  #   weight: 1.0
+
+# Auswahl pro Lauf
+selection:
+  total: 14          # Anzahl Karten im Kiosk (12–15)
+  max_age_hours: 72  # nur Artikel der letzten 72 h
+  min_score: 40      # darunter fliegt ein Artikel raus
+  mix:               # Ziel-Mix; zu wenig in einer Kategorie → auffüllen
+    "KI weltweit": 0.55
+    "KI × Energie": 0.25
+    "Energie": 0.20

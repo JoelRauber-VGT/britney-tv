@@ -10,3 +10,10 @@ vidoes/*/_orig_backup/
 memory/
 
 shots/
+
+# News-Pipeline: Secrets, Laufzeit-State und generierter Output
+.env
+news_pipeline/.env
+news_pipeline/state/
+data/
+.venv/

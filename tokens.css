@@ -69,6 +69,12 @@
   --color-accent-2: oklch(66% 0.150 330);   /* Magenta/Violett — Brücke zu den Videos (Tracks) */
   --color-focus:    oklch(72% 0.190 18);
 
+  /* News-Kategorien — aus Akzent + Marke abgeleitet */
+  --news-ki:         oklch(70% 0.160 322);  /* KI weltweit · Violett-Magenta (= accent-2, heller) */
+  --news-energie:    var(--brand-coral);    /* Energie · Koralle */
+  --news-ki-energie: var(--brand-rose);     /* KI × Energie · Rosé */
+  --color-card:      oklch(11% 0.022 315);  /* Kartengrund, eine Stufe über paper */
+
   /* Aurora-Farben (transparente Verläufe für den bewegten Hintergrund) */
   --aurora-rose:    oklch(60% 0.180 18 / 0.40);
   --aurora-coral:   oklch(66% 0.150 38 / 0.28);

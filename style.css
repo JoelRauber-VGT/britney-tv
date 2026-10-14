@@ -259,6 +259,221 @@ body {
 /* Hintergrund „off": auch Bloom aus, damit es wirklich flach bleibt */
 :root[data-bg="off"] .britney::before { display: none; }
 
+/* ── Mitte: News-Widget (center: 'news') ──
+   Exakt die Box des Britney-Videos (gleiche Position, Höhe, Seitenverhältnis),
+   damit oben/unten nichts verrutscht. Alle Größen in cqw/cqh → skaliert mit der
+   Box identisch auf 1080×1920 und 2160×3840. Bewegung kommt nur aus news.js
+   (Web Animations API, transform/opacity). */
+.news {
+  position: fixed;
+  left: 50%;
+  top: 44%;
+  z-index: var(--z-base);
+  height: 48vh;
+  aspect-ratio: 1248 / 1656;
+  max-width: 90vw;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  container-type: size;
+}
+.news [hidden] { display: none !important; }
+
+/* Exakt derselbe Bloom wie hinter dem Video (.britney::before) → Karte wächst aus
+   dem Glühen, und ausserhalb der Box bleibt jedes Pixel wie vorher. */
+.news::before {
+  content: "";
+  position: absolute;
+  inset: -18% -12%;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 42%, var(--aurora-rose) 0%, transparent 70%),
+    radial-gradient(ellipse 70% 65% at 50% 50%, var(--aurora-violet) 0%, transparent 72%);
+  opacity: 0.85;
+}
+:root[data-bg="off"] .news::before { display: none; }
+
+.news__card {
+  --cat: var(--color-ink-2);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 4.5cqw;
+  background: var(--color-card);
+  border: 1px solid var(--color-rule-2);
+  box-shadow: 0 0 5cqw oklch(60% 0.18 18 / 0.16);
+}
+.news__card[data-cat="ki"]         { --cat: var(--news-ki); }
+.news__card[data-cat="energie"]    { --cat: var(--news-energie); }
+.news__card[data-cat="ki-energie"] { --cat: var(--news-ki-energie); }
+
+/* Bild oben, läuft per Verlauf ins Kartenschwarz aus */
+.news__media {
+  position: relative;
+  flex: 0 0 34cqh;
+  overflow: hidden;
+  background: var(--color-paper);
+}
+.news__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: 62% 40%;
+}
+.news__media::after {
+  content: "";
+  position: absolute;
+  inset: 45% 0 0;
+  background: linear-gradient(to bottom, transparent, var(--color-card));
+}
+/* Kein/kaputtes Bild: ruhiger Glow in der Kategoriefarbe */
+.news__media.is-fallback .news__img { visibility: hidden; }
+.news__media.is-fallback {
+  background:
+    radial-gradient(60% 80% at 30% 40%, color-mix(in oklch, var(--cat) 55%, transparent), transparent 70%),
+    radial-gradient(50% 70% at 76% 62%, var(--aurora-violet), transparent 70%),
+    var(--color-paper);
+}
+
+.news__body {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2cqh;
+  margin-top: -6cqh;            /* Text ragt leicht in den Bild-Verlauf */
+  padding: 0 6cqw 7cqw;
+}
+
+.news__meta {
+  display: flex;
+  align-items: center;
+  gap: 2cqw;
+}
+.news__pill,
+.news__badge {
+  font-family: var(--font-body);
+  font-size: 3.4cqw;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1;
+  padding: 0.5em 1em;
+  border-radius: 999px;
+}
+.news__pill {
+  color: var(--cat);
+  background: color-mix(in oklch, var(--cat) 16%, transparent);
+  border: 1px solid color-mix(in oklch, var(--cat) 50%, transparent);
+}
+.news__badge {
+  color: var(--color-paper);
+  font-weight: 700;
+  background: var(--brand-gradient);
+  box-shadow: 0 0 2cqw oklch(65% 0.20 15 / 0.5);
+}
+.news__pos {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 3cqw;
+  color: var(--color-muted);
+  letter-spacing: 0.08em;
+}
+
+.news__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 6cqw;
+  font-weight: 500;
+  line-height: 1.16;
+  padding-bottom: 0.06em;       /* Unterlängen (g, p) nicht vom Clamp abschneiden */
+  flex-shrink: 0;
+  color: var(--color-ink);
+  text-wrap: balance;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+.news__summary {
+  margin: 0;
+  font-size: 3.9cqw;
+  font-weight: 300;
+  line-height: 1.4;
+  flex-shrink: 0;               /* nie halbe Zeilen: Höhe kommt nur vom Clamp */
+  color: var(--color-ink-2);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  overflow: hidden;
+}
+
+.news__foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4cqw;
+  padding-top: 2cqh;
+  border-top: 1px solid var(--color-rule-2);
+}
+.news__src {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  font-size: 3.4cqw;
+  color: var(--color-muted);
+}
+.news__source { color: var(--color-ink-2); font-weight: 500; }
+.news__qr {
+  margin: 0;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2.4cqw;
+}
+.news__qr img {
+  order: 2;
+  width: 15cqw;
+  height: 15cqw;
+  border-radius: 1.6cqw;
+  background: #f1ecf2;
+}
+.news__qr figcaption {
+  max-width: 7em;
+  text-align: right;
+  line-height: 1.35;
+  font-size: 2.6cqw;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/* Zeit bis zur nächsten Karte — dünne Hairline im Markenverlauf */
+.news__progress {
+  position: absolute;
+  z-index: 3;
+  left: 6cqw;
+  right: 6cqw;
+  bottom: 3cqw;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--color-rule-2);
+  overflow: hidden;
+}
+.news__progress-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--brand-gradient);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
 /* ── HUD ── */
 .hud {
   position: fixed;
