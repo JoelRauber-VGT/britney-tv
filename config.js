@@ -16,9 +16,20 @@ const CONFIG = {
      * Vorlauf ("Startet am …"), danach läuft der Countdown. (ISO-Format) */
     start: '2026-07-01T08:00:00',
     end:   '2029-07-01T17:00:00',   /* Projektlaufzeit 3 Jahre */
+
+    /* Projektstatus oben:
+     *   'pruefung' – Antrag liegt bei Innosuisse: statt Countdown ein Status-Hinweis
+     *   'laufend'  – Projekt offiziell gestartet: Countdown + Datumszeile wie gewohnt */
+    status: 'pruefung',
+    review: {
+      title: 'In Prüfung',                                   /* grosse Chrom-Zeile */
+      label: 'Projektantrag bei Innosuisse',                 /* darunter, klein */
+      note:  'Noch nicht offiziell gestartet – der Antrag wird aktuell von <strong>Innosuisse</strong> geprüft. Die Vorarbeiten laufen bereits.',
+    },
   },
 
   iq: {
+    show:    false,  /* IQ-Anzeige unten ein-/ausblenden */
     current: 20,   /* 0 = noch keine Daten → zeigt »--«. Später hochsetzen (z. B. britney.setIQ(60)). */
     start:   0,    /* Linkes Ende der Skala / des Balkens */
     target:  180,  /* Rechtes Ende der Skala (Ziel) */

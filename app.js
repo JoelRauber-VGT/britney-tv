@@ -104,8 +104,22 @@ function tick() {
   const dayEl = $('dayOf');
   if (dayEl) dayEl.textContent = `Tag ${dayOf} von ${totalDays}`;
 }
-tick();
-setInterval(tick, 1000);
+/* Status „pruefung": Antrag liegt bei Innosuisse → kein Countdown, sondern ein
+   ruhiger Status-Hinweis (Texte aus cfg.project.review). */
+if (cfg.project.status === 'pruefung') {
+  const r = cfg.project.review;
+  const fig = $('cd');
+  fig.textContent = r.title;
+  fig.classList.add('countdown__figure--status');
+  document.querySelector('.countdown__label').textContent = r.label;
+  $('dates').innerHTML = r.note;
+  $('dates').classList.add('meta__dates--status');
+  const track = $('projFill').parentElement;
+  if (track) track.remove();
+} else {
+  tick();
+  setInterval(tick, 1000);
+}
 
 /* ════════════════════════════════════════════════════════════════
  * 2 · IQ-STAND
@@ -140,15 +154,21 @@ function showIQ(value, animate = true) {
   })(t0);
 }
 
-$('iqStart').textContent = String(cfg.iq.start);
-$('iqTarget').textContent = String(cfg.iq.target);
-
-/* animate=false: kein Hochzaehlen — die Seite ist bewusst komplett statisch. */
-showIQ(cfg.iq.current, false);
+/* IQ-Anzeige ausgeblendet → Footer ganz raus; die Logo-Bühne rückt nach unten */
+const iqShown = cfg.iq.show !== false;
+if (!iqShown) {
+  document.querySelector('.hud--bottom').remove();
+  document.documentElement.dataset.iq = 'off';
+} else {
+  $('iqStart').textContent = String(cfg.iq.start);
+  $('iqTarget').textContent = String(cfg.iq.target);
+  /* animate=false: kein Hochzaehlen — die Seite ist bewusst komplett statisch. */
+  showIQ(cfg.iq.current, false);
+}
 
 /* Öffentliche API — wird unten (Video-Abschnitt) noch erweitert. */
 window.britney = {
-  setIQ: (v) => { cfg.iq.current = v; showIQ(v, false); },
+  setIQ: (v) => { cfg.iq.current = v; if (iqShown) showIQ(v, false); },
 };
 
 /* ════════════════════════════════════════════════════════════════

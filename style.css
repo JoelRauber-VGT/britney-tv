@@ -588,8 +588,8 @@ body {
 }
 .news__qr img {
   order: 2;
-  width: 15cqw;
-  height: 15cqw;
+  width: 23cqw;
+  height: 23cqw;
   border-radius: 1.6cqw;
   background: #f1ecf2;
 }
@@ -916,3 +916,21 @@ body {
   opacity: 1 !important;
   transform: none !important;
 }
+
+/* ── Status „pruefung" (config: project.status) ──
+   Statt Countdown-Zahl steht oben der Status in derselben Chrom-Optik;
+   die Datumszeile wird zum erklärenden Hinweis. */
+.countdown__figure--status {
+  font-size: calc(var(--text-count) * 0.78);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.meta__dates--status {
+  max-width: 62ch;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+
+/* IQ ausgeblendet (config: iq.show = false): Logo-Bühne rückt in den frei
+   gewordenen Platz unten; die Mitte bleibt unverändert. */
+:root[data-iq="off"] .stage { padding-bottom: 8vh; }

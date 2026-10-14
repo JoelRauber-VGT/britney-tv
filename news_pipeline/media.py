@@ -64,7 +64,8 @@ class ImageMaker:
 
 def make_qr(url: str, dst: Path) -> None:
     """QR als schlankes SVG: dunkle Module auf hellem Grund (scannt am zuverlässigsten)."""
-    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_M, border=2)
+    # Level L = gröbstes Raster → am Bildschirm aus Distanz am besten lesbar
+    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L, border=2)
     qr.add_data(url)
     qr.make(fit=True)
     m = qr.get_matrix()
