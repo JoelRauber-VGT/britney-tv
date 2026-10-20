@@ -16,6 +16,9 @@ UA = "Mozilla/5.0 (compatible; BritneyNewsKiosk/1.0)"
 TRACKING = re.compile(r"^(utm_|fbclid|gclid|mc_|ref$|cmp$)")
 
 
+SPONSORED = re.compile(r"/(spons|sponsored|advertorial|anzeige)/", re.I)
+
+
 def normalize_url(url: str) -> str:
     """Tracking-Parameter und Fragment entfernen → stabile ID, kürzerer QR-Code."""
     p = urlsplit(url.strip())
@@ -75,6 +78,8 @@ def fetch_all(sources: list[dict]) -> list[dict]:
                 if not link:
                     continue
                 url = normalize_url(link)
+                if SPONSORED.search(url):  # bezahlte Inhalte (z. B. Utility Dive /spons/)
+                    continue
                 aid = url_id(url)
                 if aid in articles:
                     continue

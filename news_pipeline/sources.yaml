@@ -13,10 +13,27 @@ sources:
     url: https://www.cleanenergywire.org/rss.xml
     kind: energy
     weight: 1.0
+  - name: heise
+    url: https://www.heise.de/thema/Kuenstliche-Intelligenz.xml
+    kind: ai
+    weight: 1.1
+  - name: SRF
+    url: https://www.srf.ch/news/bnf/rss/1890        # Schweiz (Inland)
+    kind: general
+    weight: 1.2
+  - name: SRF Wirtschaft
+    url: https://www.srf.ch/news/bnf/rss/1926
+    kind: general
+    weight: 1.2
+  - name: tagesschau
+    url: https://www.tagesschau.de/wirtschaft/energie/index~rss2.xml
+    kind: energy
+    weight: 1.0
+  # US-Quelle: nur noch, wenn es weltweit Gewicht hat (Prompt bewertet US-Lokalthemen tief)
   - name: Utility Dive
     url: https://www.utilitydive.com/feeds/news/
     kind: energy
-    weight: 0.9
+    weight: 0.7
   # Geprüft, liefert 404:
   # - name: Clean Energy Wire (News)
   #   url: https://www.cleanenergywire.org/news/feed

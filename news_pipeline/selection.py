@@ -1,5 +1,6 @@
 """Top-Artikel nach Score auswählen, mit Ziel-Mix pro Kategorie."""
 from .config import CATEGORIES
+from .fetch import SPONSORED
 
 
 def rank(item: dict) -> float:
@@ -8,7 +9,8 @@ def rank(item: dict) -> float:
 
 def select(items: list[dict], total: int, mix: dict[str, float], min_score: int) -> list[dict]:
     pool = sorted(
-        (i for i in items if i["relevant"] and i["score"] >= min_score),
+        (i for i in items if i["relevant"] and i["score"] >= min_score
+         and not SPONSORED.search(i.get("url", ""))),
         key=rank,
         reverse=True,
     )

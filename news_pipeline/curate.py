@@ -12,7 +12,10 @@ UMLAUT_FIX = {
     "fuer": "für", "Fuer": "Für", "ueber": "über", "Ueber": "Über", "koenn": "könn",
     "moecht": "möcht", "wuerd": "würd", "muess": "müss", "duerf": "dürf", "waer": "wär",
     "hoeh": "höh", "groess": "gröss", "aender": "änder", "Aender": "Änder",
+    "aehnl": "ähnl", "Aehnl": "Ähnl", "praeg": "präg", "Praeg": "Präg",
 }
+# Endung -itaet ist immer -ität (Kapazität, Flexibilität, Qualität …)
+_ITAET_RE = re.compile(r"itaet")
 _UMLAUT_RE = re.compile(r"\b(" + "|".join(UMLAUT_FIX) + r")")
 
 
@@ -26,6 +29,7 @@ def trim_summary(t: str, limit: int = 280) -> str:
 
 def fix_text(t: str) -> str:
     t = t.replace("ß", "ss").strip()
+    t = _ITAET_RE.sub("ität", t)
     return _UMLAUT_RE.sub(lambda m: UMLAUT_FIX[m.group(1)], t)
 
 SCHEMA = {
@@ -42,18 +46,31 @@ SCHEMA = {
     },
 }
 
-SYSTEM = """Du kuratierst News für einen Lobby-Bildschirm eines Schweizer Energiehandelsunternehmens.
-Mitarbeitende lesen die Karten im Vorbeigehen. Beurteile den Artikel und liefere:
+SYSTEM = """Du kuratierst News für einen Lobby-Bildschirm eines Schweizer Energiehandelsunternehmens (VGT).
+Die Leute lesen die Karten im Vorbeigehen. Viele sind KEINE KI- oder Energie-Fachleute.
+Beurteile den Artikel und liefere:
 
-- relevant: true nur für echte, substanzielle News. false für Werbung, Deals/Rabatte,
-  Sponsored Content, Webinar-Ankündigungen, Stellenanzeigen, reine Personalien ohne Tragweite.
-- category: "KI weltweit" (KI allgemein), "Energie" (Energiemarkt, Erneuerbare, Netze, Politik)
+- relevant: true nur für echte, substanzielle News zu KI oder Energie.
+  false für alles andere (z. B. allgemeine Inland-/Wirtschaftsnews ohne KI- oder Energiebezug),
+  Werbung, Sponsored Content, Webinare, Paywall-Teaser, Stellenanzeigen, reine Personalien.
+- category: "KI weltweit" (KI allgemein), "Energie" (Strom, Gas, Erneuerbare, Netze, Energiepolitik)
   oder "KI × Energie" (KI angewendet auf Energie, Rechenzentren & Strombedarf, Netzsteuerung, Handel mit KI).
-- score 0–100: Wie spannend ist das für diese Mitarbeitenden? Grosse Modell-Releases, Marktbewegungen,
-  Regulierung und KI-im-Energiehandel hoch; Nischen-Produktupdates und Lokalnews tief.
+- score 0–100, nach diesen Regeln:
+  ENERGIE: Fokus DACH-Raum, vor allem Schweiz. Hoch: Schweizer und europäische Strom-/Gasmärkte,
+    Strompreise, Versorgungssicherheit, Energiepolitik CH/DE/AT/EU, grosse Speicher-/Netzprojekte im DACH-Raum,
+    alles was den Energiehandel betrifft. Ausserhalb DACH nur hoch, wenn es weltweit Gewicht hat oder den
+    europäischen Markt spürbar beeinflusst (z. B. grosse Gas-/Ölpreis-Bewegungen, Atom-Deals der Tech-Konzerne).
+    US-Lokalthemen (einzelne US-Versorger, Tarifverfahren, Bundesstaaten-Regulierung, PJM-/ERCOT-Details): unter 35.
+  KI: Für ein breites Publikum spannend und verständlich. Hoch: Dinge, die man aus dem Alltag kennt
+    (ChatGPT, Claude, Gemini, Siri usw.), Auswirkungen auf Arbeit, Schule, Gesellschaft, Recht und Sicherheit,
+    verblüffende Anwendungen, grosse Entscheide der bekannten Firmen. Tief (unter 40): Benchmark-Vergleiche,
+    Nischenmodelle und Fachtools, Finanzierungsrunden, Forschungsdetails, die man ohne Vorwissen nicht versteht.
+  KI × ENERGIE: hoch, wenn es den Strombedarf, Energiemärkte oder Energiefirmen konkret betrifft.
 - title_de: kurze, packende deutsche Headline, maximal 70 Zeichen, keine Clickbait-Fragen.
+  Für Laien verständlich: bekannte Namen statt Modellnummern, keine Abkürzungen ohne Erklärung.
 - summary_de: 2–3 Sätze auf Deutsch, insgesamt maximal 260 Zeichen. Komplett eigene Formulierung,
-  keine wörtlichen Zitate, keine übernommenen Sätze. Sachlich, verständlich, ohne Fachjargon.
+  keine wörtlichen Zitate, keine übernommenen Sätze. Einfach und konkret: Was ist passiert, und warum
+  ist das interessant? Fachbegriffe vermeiden oder kurz erklären.
   Umlaute ä, ö, ü ganz normal schreiben (nie ae/oe/ue); einzig ß wird als ss geschrieben (Schweiz).
 - image_prompt: englische Bildidee für ein abstraktes, futuristisches Illustrationsbild zum Inhalt.
   Symbolisch statt wörtlich, beschreibe nur Motiv und Komposition, KEINE Farben (der Stil wird ergänzt).

@@ -107,7 +107,22 @@
       qi.onerror = () => { qr.hidden = true; };
       qi.src = resolve(it.qr);
     }
+    fitText(layer);
     return setImage(q('.news__img'), q('.news__media'), it.image && resolve(it.image));
+  }
+
+  /* Lange Titel + Texte dürfen den Fuss (QR) nie über den Fortschrittsbalken
+     drücken: Summary zeilenweise kürzen, bis alles in die Karte passt. So bleibt
+     der Abstand QR-Code → Balken auf jeder Karte gleich. */
+  const MAX_SUMMARY_LINES = 6;
+  function fitText(layer) {
+    const body = layer.querySelector('.news__body');
+    const sum = layer.querySelector('.news__summary');
+    let lines = MAX_SUMMARY_LINES;
+    sum.style.webkitLineClamp = lines;
+    while (body.scrollHeight > body.clientHeight + 1 && lines > 2) {
+      sum.style.webkitLineClamp = --lines;
+    }
   }
 
   function fillEmpty(layer) {
@@ -122,6 +137,7 @@
     q('.news__source').textContent = 'Britney · News';
     q('.news__time').textContent = '';
     q('.news__qr').hidden = true;
+    fitText(layer);
     return setImage(q('.news__img'), q('.news__media'), null);
   }
 
@@ -206,6 +222,9 @@
   /* ── Start ── */
   load().finally(() => { if (!showing) advance(); });
   setInterval(load, N.reloadMinutes * 60_000);
+  /* Webfont kommt evtl. nach der ersten Messung → dann und bei Grössenänderung neu einpassen */
+  if (document.fonts) document.fonts.ready.then(() => layers.forEach(fitText));
+  window.addEventListener('resize', () => layers.forEach(fitText));
 
   if (window.britney) window.britney.nextNews = advance;
 })();

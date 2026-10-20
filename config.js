@@ -18,13 +18,13 @@ const CONFIG = {
     end:   '2029-07-01T17:00:00',   /* Projektlaufzeit 3 Jahre */
 
     /* Projektstatus oben:
-     *   'pruefung' – Antrag liegt bei Innosuisse: statt Countdown ein Status-Hinweis
+     *   'pruefung' – Antrag liegt bei Innosuisse: statt Countdown ein Status-Hinweis (»In Vorbereitung«)
      *   'laufend'  – Projekt offiziell gestartet: Countdown + Datumszeile wie gewohnt */
     status: 'pruefung',
     review: {
-      title: 'In Prüfung',                                   /* grosse Chrom-Zeile */
-      label: 'Projektantrag bei Innosuisse',                 /* darunter, klein */
-      note:  'Noch nicht offiziell gestartet – der Antrag wird aktuell von <strong>Innosuisse</strong> geprüft. Die Vorarbeiten laufen bereits.',
+      title: 'In Vorbereitung',                                   /* grosse Chrom-Zeile */
+      label: 'Projektstart nach Innosuisse-Zusage',                 /* darunter, klein */
+      note:  'Die Vorarbeiten laufen bereits – der offizielle Start folgt, sobald der Förderentscheid von <strong>Innosuisse</strong> vorliegt.',
     },
   },
 

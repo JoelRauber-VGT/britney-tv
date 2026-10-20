@@ -416,7 +416,7 @@ body {
 .news {
   position: fixed;
   left: 50%;
-  top: 44%;
+  top: 49%;   /* etwas tiefer: mittig zwischen Status oben und Logos unten */
   z-index: var(--z-base);
   height: 48vh;
   aspect-ratio: 1248 / 1656;
