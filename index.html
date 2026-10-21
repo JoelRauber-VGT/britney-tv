@@ -33,6 +33,12 @@
   <!-- Grabstein-Modus (config: grave.show). Füllt den ganzen Schirm,
        alles andere wird dann ausgeblendet. Texte kommen aus config.js. -->
   <section class="grave" id="grave" hidden aria-label="Grabstein">
+    <div class="grave__moon" aria-hidden="true"></div>
+    <div class="grave__bats" aria-hidden="true">
+      <svg class="grave__bat" viewBox="0 0 100 44"><path d="M50 14c-3-6-5-6-6-2-4-2-9 0-11 6C27 8 14 4 0 8c8 4 12 12 12 22 6-6 12-6 16 0 4-6 10-6 14 2 2-4 5-6 8-6s6 2 8 6c4-8 10-8 14-2 4-6 10-6 16 0 0-10 4-18 12-22-14-4-27 0-33 10-2-6-7-8-11-6-1-4-3-4-6 2z" fill="oklch(12% 0.02 280)"/></svg>
+      <svg class="grave__bat" viewBox="0 0 100 44"><path d="M50 14c-3-6-5-6-6-2-4-2-9 0-11 6C27 8 14 4 0 8c8 4 12 12 12 22 6-6 12-6 16 0 4-6 10-6 14 2 2-4 5-6 8-6s6 2 8 6c4-8 10-8 14-2 4-6 10-6 16 0 0-10 4-18 12-22-14-4-27 0-33 10-2-6-7-8-11-6-1-4-3-4-6 2z" fill="oklch(12% 0.02 280)"/></svg>
+      <svg class="grave__bat" viewBox="0 0 100 44"><path d="M50 14c-3-6-5-6-6-2-4-2-9 0-11 6C27 8 14 4 0 8c8 4 12 12 12 22 6-6 12-6 16 0 4-6 10-6 14 2 2-4 5-6 8-6s6 2 8 6c4-8 10-8 14-2 4-6 10-6 16 0 0-10 4-18 12-22-14-4-27 0-33 10-2-6-7-8-11-6-1-4-3-4-6 2z" fill="oklch(12% 0.02 280)"/></svg>
+    </div>
     <svg class="grave__ghost" id="graveGhost" viewBox="0 0 120 150" aria-hidden="true">
       <path d="M60 6C29 6 12 30 12 62v76l12-10 12 12 12-12 12 12 12-12 12 12 12-12 12 10V62C108 30 91 6 60 6z"
             fill="oklch(95% 0.02 270 / 0.88)"/>
@@ -46,6 +52,22 @@
         <polyline points="90,9 87,17 91,23 85,31 88,37 84,44" fill="none"
                   stroke="oklch(22% 0.02 280 / 0.55)" stroke-width="0.6" vector-effect="non-scaling-stroke"/>
       </svg>
+      <svg class="grave__web" viewBox="0 0 100 100" aria-hidden="true">
+        <g fill="none" stroke="oklch(92% 0.01 280 / 0.55)" stroke-width="0.8">
+          <path d="M0 0L100 30M0 0L80 70M0 0L45 100M0 0L10 100"/>
+          <path d="M0 20Q9 15 20 6M0 38Q18 30 36 11M0 58Q27 46 54 17M0 78Q37 62 72 22"/>
+          <path d="M20 6Q22 18 16 28 6 34 4 40M36 11Q40 30 31 48 16 62 8 72M54 17Q58 42 46 68 28 84 14 94"/>
+        </g>
+      </svg>
+      <div class="grave__spider" id="graveSpider" aria-hidden="true">
+        <span class="grave__spider-thread"></span>
+        <svg viewBox="0 0 60 50"><g stroke="oklch(12% 0.02 280)" stroke-width="2.5" fill="none" stroke-linecap="round">
+          <path d="M22 22 6 10M22 26 2 24M22 30 6 40M24 33 12 48M38 22 54 10M38 26 58 24M38 30 54 40M36 33 48 48"/></g>
+          <ellipse cx="30" cy="28" rx="11" ry="13" fill="oklch(12% 0.02 280)"/>
+          <circle cx="30" cy="13" r="7" fill="oklch(12% 0.02 280)"/>
+          <circle cx="27" cy="12" r="1.6" fill="oklch(70% 0.2 25)"/><circle cx="33" cy="12" r="1.6" fill="oklch(70% 0.2 25)"/>
+        </svg>
+      </div>
       <span class="grave__moss grave__moss--l" aria-hidden="true"></span>
       <span class="grave__moss grave__moss--r" aria-hidden="true"></span>
 
@@ -64,6 +86,17 @@
     <div class="grave__plinth" aria-hidden="true"></div>
 
     <div class="grave__ground" aria-hidden="true">
+      <svg class="grave__pumpkin grave__pumpkin--big" viewBox="0 0 120 104">
+        <path d="M58 18c0-8 4-14 10-16l4 4c-5 2-7 6-7 12z" fill="oklch(45% 0.09 130)"/>
+        <ellipse cx="34" cy="62" rx="28" ry="38" fill="oklch(58% 0.17 50)"/>
+        <ellipse cx="86" cy="62" rx="28" ry="38" fill="oklch(58% 0.17 50)"/>
+        <ellipse cx="60" cy="62" rx="30" ry="41" fill="oklch(66% 0.18 55)"/>
+        <g class="grave__pumpkin-face" fill="oklch(90% 0.16 90)">
+          <path d="M34 50l12-14 10 14z"/><path d="M64 50l10-14 12 14z"/>
+          <path d="M54 62l6-9 6 9z"/>
+          <path d="M28 72c10 14 54 14 64 0l-8 3-4 7-6-6-8 7-8-7-6 6-4-7z"/>
+        </g>
+      </svg>
       <div class="grave__candle grave__candle--l"><span class="grave__flame"></span></div>
       <svg class="grave__flower grave__flower--up" viewBox="0 0 60 120">
         <path d="M30 120V48" stroke="oklch(48% 0.12 145)" stroke-width="4"/>
@@ -83,6 +116,18 @@
         <circle cx="74" cy="42" r="6" fill="oklch(62% 0.10 75)"/>
       </svg>
       <div class="grave__candle grave__candle--r"><span class="grave__flame"></span></div>
+      <svg class="grave__pumpkin grave__pumpkin--small" viewBox="0 0 120 104">
+        <path d="M58 18c0-8 4-14 10-16l4 4c-5 2-7 6-7 12z" fill="oklch(45% 0.09 130)"/>
+        <ellipse cx="34" cy="62" rx="28" ry="38" fill="oklch(58% 0.17 50)"/>
+        <ellipse cx="86" cy="62" rx="28" ry="38" fill="oklch(58% 0.17 50)"/>
+        <ellipse cx="60" cy="62" rx="30" ry="41" fill="oklch(66% 0.18 55)"/>
+        <g class="grave__pumpkin-face" fill="oklch(90% 0.16 90)">
+          <path d="M34 50l12-14 10 14z"/><path d="M64 50l10-14 12 14z"/>
+          <path d="M54 62l6-9 6 9z"/>
+          <path d="M28 72c10 14 54 14 64 0l-8 3-4 7-6-6-8 7-8-7-6 6-4-7z"/>
+        </g>
+      </svg>
+      <div class="grave__fog" aria-hidden="true"></div>
     </div>
 
     <p class="grave__footer" id="graveFooter"></p>

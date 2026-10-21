@@ -41,6 +41,7 @@ const CONFIG = {
     note:    'Sie hätte einen IQ von 180 erreicht. Ganz bestimmt.',
     footer:  '',     /* kleine Zeile unter dem Grab; leer = keine */
     animate: true,   /* Kerzen flackern, Geist schwebt. false = komplett still */
+    halloween: true, /* Mond, Fledermäuse, Kürbisse, Spinne, Nebel */
   },
 
   iq: {

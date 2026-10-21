@@ -87,7 +87,40 @@ if (G.show) {
       { transform: 'translate(-1.5vw, -2.2vh) rotate(3deg)' },
       { transform: 'translate(0, 0) rotate(-4deg)' },
     ], { duration: 7000, iterations: Infinity, easing: 'ease-in-out' });
+
+    if (G.halloween !== false) {
+      /* Fledermäuse: fliegen in Schleifen über den Himmel und flattern */
+      document.querySelectorAll('.grave__bat').forEach((b, i) => {
+        const dur = 16000 + i * 5000;
+        b.animate([
+          { transform: 'translate(-20vw, 6vh)' },
+          { transform: 'translate(25vw, -2vh)' },
+          { transform: 'translate(70vw, 8vh)' },
+          { transform: 'translate(120vw, 0vh)' },
+        ], { duration: dur, delay: -i * 6000, iterations: Infinity, easing: 'linear' });
+        b.querySelector('path').animate([
+          { transform: 'scaleY(1)' }, { transform: 'scaleY(0.35)' }, { transform: 'scaleY(1)' },
+        ], { duration: 260 + i * 60, iterations: Infinity });
+      });
+      /* Spinne: seilt sich langsam ab und klettert wieder hoch */
+      const sp = $('graveSpider');
+      if (sp) sp.animate([
+        { transform: 'translateY(0)' }, { transform: 'translateY(5vh)' },
+        { transform: 'translateY(4.4vh)' }, { transform: 'translateY(0)' },
+      ], { duration: 9000, iterations: Infinity, easing: 'ease-in-out' });
+      /* Kürbis-Gesichter glimmen */
+      document.querySelectorAll('.grave__pumpkin-face').forEach((f, i) => {
+        f.animate([{ opacity: 1 }, { opacity: 0.72 }, { opacity: 0.95 }, { opacity: 0.8 }, { opacity: 1 }],
+          { duration: 2300 + i * 700, iterations: Infinity });
+      });
+      /* Bodennebel driftet */
+      document.querySelectorAll('.grave__fog').forEach((f) => {
+        f.animate([{ transform: 'translateX(-10vw)' }, { transform: 'translateX(0)' }, { transform: 'translateX(-10vw)' }],
+          { duration: 30000, iterations: Infinity, easing: 'ease-in-out' });
+      });
+    }
   }
+  if (G.halloween === false) document.documentElement.dataset.halloween = 'off';
 }
 
 /* ════════════════════════════════════════════════════════════════
