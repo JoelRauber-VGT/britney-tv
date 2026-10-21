@@ -28,11 +28,24 @@ const CONFIG = {
     },
   },
 
+  /* Wetter-Modus: oben Wetter (Woche) für einen Ort, darunter die News,
+   * unten links das VGT-Logo. Daten: Open-Meteo (gratis, ohne Key).
+   * show: false → klassisches Dashboard. Grabstein (grave.show) hat Vorrang. */
+  weather: {
+    show:           true,
+    city:           'Aarau',
+    lat:            47.3925,
+    lon:            8.0444,
+    refreshMinutes: 15,
+    /* Halloween-Deko: 'auto' = nur im Oktober (bis und mit 31.), true = immer, false = nie */
+    halloween:      'auto',
+  },
+
   /* Grabstein-Modus: Projekt wurde von Innosuisse abgelehnt.
    * show: true  → ganzer Bildschirm = Grabstein (keine News, kein Countdown)
    * show: false → normales Dashboard */
   grave: {
-    show:    true,
+    show:    false,
     kicker:  'In Gedenken an',
     name:    'Britney',
     sub:     'KI-Forschungsprojekt · VGT × FHNW',

@@ -30,6 +30,37 @@
   </div>
   <div class="vignette" aria-hidden="true"></div>
 
+  <!-- Wetter-Modus (config: weather.show): oben Wetter für die Woche,
+       darunter die News, unten links das Logo. Inhalt baut weather.js. -->
+  <section class="wx" id="wx" hidden aria-label="Wetter">
+    <div class="wx__row">
+      <div class="wx-tile wx-tile--clock">
+        <p class="wx__clock" id="wxClock"></p>
+        <p class="wx__date" id="wxDate"></p>
+        <p class="wx__sun" id="wxSun"></p>
+      </div>
+      <div class="wx-tile wx-tile--now">
+        <p class="wx-tile__label"><span id="wxCity"></span> · Jetzt</p>
+        <div class="wx__now">
+          <div class="wx__icon" id="wxIcon"></div>
+          <div class="wx__temp" id="wxTemp">–</div>
+          <p class="wx__desc" id="wxDesc"></p>
+        </div>
+        <p class="wx__facts" id="wxFacts"></p>
+      </div>
+    </div>
+    <div class="wx-tile wx-tile--hours">
+      <p class="wx-tile__label">Nächste 24 Stunden</p>
+      <div class="wx__hours" id="wxHours"></div>
+    </div>
+    <div class="wx__days" id="wxDays"></div>
+  </section>
+  <footer class="wx-foot" id="wxFoot" hidden>
+    <img class="wx-foot__logo" src="./vgt.png" alt="VGT">
+    <p class="wx-foot__hw" id="wxHalloween" hidden></p>
+    <p class="wx-foot__stamp" id="wxStamp"></p>
+  </footer>
+
   <!-- Grabstein-Modus (config: grave.show). Füllt den ganzen Schirm,
        alles andere wird dann ausgeblendet. Texte kommen aus config.js. -->
   <section class="grave" id="grave" hidden aria-label="Grabstein">
@@ -232,6 +263,7 @@
   <script src="./config.js"></script>
   <script src="./app.js"></script>
   <script src="./news.js"></script>
+  <script src="./weather.js"></script>
 
 </body>
 </html>

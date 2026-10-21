@@ -125,6 +125,13 @@ if (G.show) {
   if (G.halloween === false) document.documentElement.dataset.halloween = 'off';
 }
 
+/* Wetter-Modus: Seite umschalten (Inhalt baut weather.js) */
+if (!G.show && cfg.weather && cfg.weather.show) {
+  document.documentElement.dataset.mode = 'weather';
+  $('wx').hidden = false;
+  $('wxFoot').hidden = false;
+}
+
 /* ════════════════════════════════════════════════════════════════
  * 1 · COUNTDOWN
  * ════════════════════════════════════════════════════════════════ */

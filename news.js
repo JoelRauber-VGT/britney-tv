@@ -118,9 +118,17 @@
   function fitText(layer) {
     const body = layer.querySelector('.news__body');
     const sum = layer.querySelector('.news__summary');
+    const foot = layer.querySelector('.news__foot');
+    /* Unterkante des Fusses muss über dem Innenabstand unten bleiben
+       (dort sitzt der Fortschrittsbalken). */
+    const overflows = () => {
+      const b = body.getBoundingClientRect();
+      const pad = parseFloat(getComputedStyle(body).paddingBottom) || 0;
+      return foot.getBoundingClientRect().bottom > b.bottom - pad + 1;
+    };
     let lines = MAX_SUMMARY_LINES;
     sum.style.webkitLineClamp = lines;
-    while (body.scrollHeight > body.clientHeight + 1 && lines > 2) {
+    while (overflows() && lines > 1) {
       sum.style.webkitLineClamp = --lines;
     }
   }

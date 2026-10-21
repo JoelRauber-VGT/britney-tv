@@ -1199,3 +1199,248 @@ body {
     radial-gradient(30% 60% at 85% 70%, oklch(85% 0.02 280 / 0.22), transparent 70%);
   will-change: transform;
 }
+
+/* ════════════════════════════════════════════════════════════════
+   WETTER-MODUS (config: weather.show)
+   Kacheln im Stil der News-Karte (eine Spur heller):
+   Uhr | Jetzt · 24 h · 7 Tage (2.5–49 vh), News (54–94 vh), Fusszeile.
+   ════════════════════════════════════════════════════════════════ */
+:root[data-mode="weather"] .hud,
+:root[data-mode="weather"] .stage { display: none !important; }
+
+:root[data-mode="weather"] .news {
+  top: 73.5%;
+  height: 38vh;
+  aspect-ratio: 1248 / 1420;
+}
+
+.wx {
+  --tile-bg:     oklch(14% 0.035 268 / 0.88);
+  --tile-border: oklch(100% 0 0 / 0.11);
+  position: fixed;
+  top: 2.5vh;
+  left: 5vw;
+  right: 5vw;
+  z-index: var(--z-raised);
+  display: flex;
+  flex-direction: column;
+  gap: 1.2vh;
+  color: var(--color-ink);
+  pointer-events: none;
+}
+.wx[hidden], .wx-foot[hidden], .wx-foot__hw[hidden] { display: none; }
+
+/* Kachel = News-Karten-Look, etwas heller */
+.wx-tile {
+  position: relative;
+  border-radius: 2vh;
+  background:
+    radial-gradient(120% 90% at 0% 0%, oklch(30% 0.08 265 / 0.35), transparent 60%),
+    var(--tile-bg);
+  border: 1px solid var(--tile-border);
+  box-shadow: 0 0 4vh oklch(60% 0.18 18 / 0.12), inset 0 1px 0 oklch(100% 0 0 / 0.06);
+  padding: 1.6vh 2.2vh;
+}
+.wx-tile__label {
+  margin: 0 0 0.6vh;
+  font-size: 1.3vh;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.wx__row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 1.2vh;
+}
+
+/* Uhr-Kachel */
+.wx-tile--clock {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.wx__clock {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 7vh;
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  background: var(--chrome-fill);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 1.8vh oklch(72% 0.15 235 / 0.4));
+}
+.wx__date { margin: 0.9vh 0 0; font-size: 1.6vh; font-weight: 500; white-space: nowrap; }
+.wx__sun  { margin: 0.4vh 0 0; font-size: 1.45vh; color: var(--color-ink-2); }
+.wx__sun b { color: var(--color-ink); font-weight: 500; }
+
+/* Jetzt-Kachel */
+.wx-tile--now { display: flex; flex-direction: column; min-width: 0; }
+.wx__now {
+  flex: 1;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1.4vh;
+  min-height: 0;
+}
+.wx__icon { width: 7.4vh; height: 7.4vh; }
+.wx__icon .wx-ico { width: 100%; height: 100%; overflow: visible;
+  filter: drop-shadow(0 0 2vh oklch(85% 0.12 85 / 0.3)); }
+.wx__temp {
+  font-family: var(--font-display);
+  font-size: 7vh;
+  line-height: 0.85;
+  background: var(--chrome-fill);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 1.8vh oklch(72% 0.15 235 / 0.4));
+}
+.wx__desc {
+  margin: 0;
+  font-size: 2vh;
+  font-weight: 500;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.wx__facts {
+  margin: 0.6vh 0 0;
+  font-size: 1.3vh;
+  color: var(--color-ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wx__facts b { color: var(--color-ink); font-weight: 500; }
+
+/* 24-h-Kachel */
+.wx-tile--hours { padding-bottom: 1vh; }
+.wx__hours { position: relative; height: 9.5vh; overflow: hidden; }
+.wx-chart { display: block; }
+.wx-chart__t { font: 500 1.4vh var(--font-body); fill: var(--color-ink); }
+.wx-chart__h { font: 400 1.2vh var(--font-mono); fill: var(--color-muted); letter-spacing: 0.04em; }
+
+/* 7 Tage: je eine Kachel */
+.wx__days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.9vw;
+}
+.wx__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4vh;
+  padding: 1vh 0 0.9vh;
+  border-radius: 1.6vh;
+  background: var(--tile-bg);
+  border: 1px solid var(--tile-border);
+  box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.06);
+}
+.wx__day.is-today {
+  background: radial-gradient(120% 80% at 50% 0%, oklch(40% 0.1 245 / 0.45), transparent 70%), var(--tile-bg);
+  border-color: oklch(72% 0.12 230 / 0.6);
+  box-shadow: 0 0 2.4vh oklch(70% 0.14 230 / 0.3);
+}
+.wx__dname {
+  margin: 0;
+  font-size: 1.4vh;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-2);
+}
+.wx__day.is-today .wx__dname { color: var(--color-ink); }
+.wx__dicon { width: 3.8vh; height: 3.8vh; }
+.wx__dicon .wx-ico { width: 100%; height: 100%; overflow: visible; }
+.wx__dmax, .wx__dmin { margin: 0; font-size: 1.65vh; font-weight: 500; line-height: 1; }
+.wx__dmin { color: var(--color-muted); }
+.wx__drange {
+  position: relative;
+  width: 0.7vh;
+  height: 3vh;
+  border-radius: 999px;
+  background: oklch(32% 0.02 265 / 0.7);
+}
+.wx__dbar { position: absolute; left: 0; right: 0; border-radius: 999px; transform-origin: 50% 100%; }
+.wx__drain {
+  margin: 0.2vh 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4vh;
+  font-size: 1.3vh;
+  color: var(--color-muted);
+}
+.wx__drain svg { width: 0.85vh; fill: currentColor; }
+.wx__drain.is-wet { color: oklch(78% 0.12 235); }
+
+/* Fusszeile: Logo · Halloween-Countdown · Stand */
+.wx-foot {
+  position: fixed;
+  left: 5vw;
+  right: 5vw;
+  bottom: 1.4vh;
+  z-index: var(--z-raised);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  pointer-events: none;
+}
+.wx-foot__logo { height: 3.6vh; width: auto; justify-self: start; }
+.wx-foot__stamp {
+  margin: 0;
+  justify-self: end;
+  font-family: var(--font-mono);
+  font-size: 1.1vh;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+.wx-foot__hw {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.8vh;
+  padding: 0.5vh 1.4vh 0.5vh 0.8vh;
+  border-radius: 999px;
+  font-size: 1.25vh;
+  white-space: nowrap;
+  color: var(--color-ink-2);
+  background: oklch(30% 0.09 50 / 0.35);
+  border: 1px solid oklch(70% 0.16 55 / 0.45);
+  box-shadow: 0 0 2.4vh oklch(70% 0.17 55 / 0.25);
+}
+.wx-foot__hw b { color: oklch(84% 0.15 65); font-weight: 500; }
+.wx-pumpkin { height: 2.3vh; width: auto; filter: drop-shadow(0 0 1vh oklch(70% 0.18 55 / 0.5)); }
+
+/* Halloween: Fledermäuse + Spinne */
+.wx-bats { position: fixed; inset: 0; z-index: calc(var(--z-raised) + 1); pointer-events: none; overflow: hidden; }
+.wx-bat { position: absolute; left: 0; top: 50.5vh; width: 7.5vw; height: auto; will-change: transform; }
+.wx-bat:nth-child(2) { top: 52vh; width: 5.5vw; }
+.wx-bat:nth-child(3) { top: 51vh; width: 6.5vw; }
+.wx-bat__wing { transform-box: fill-box; transform-origin: 0% 55%; }
+
+.wx__days { position: relative; }
+.wx-spider {
+  position: absolute;
+  top: calc(100% + 9vh);
+  right: calc(100% / 14 - 1.6vh);   /* Mitte der letzten Tageskachel */
+  width: 3.2vh;
+  z-index: 2;
+  will-change: transform;
+}
+.wx-spider__thread {
+  position: absolute;
+  bottom: 85%;
+  left: 50%;
+  width: 1px;
+  height: 9.5vh;
+  background: oklch(90% 0.01 280 / 0.55);
+}
+.wx-spider svg { display: block; width: 100%; height: auto; }
