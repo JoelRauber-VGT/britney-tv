@@ -39,7 +39,7 @@ const CONFIG = {
     dates:   '2026 – 2026',
     epitaph: 'Oops!… Innosuisse did it again.',
     note:    'Sie hätte einen IQ von 180 erreicht. Ganz bestimmt.',
-    footer:  'Statt Blumen: Förderanträge werden weiterhin gerne entgegengenommen.',
+    footer:  '',     /* kleine Zeile unter dem Grab; leer = keine */
     animate: true,   /* Kerzen flackern, Geist schwebt. false = komplett still */
   },
 
