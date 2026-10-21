@@ -1410,15 +1410,22 @@ body {
 /* Netze hängen in den oberen Bildschirmecken (Anker an Decke + Wand) und
    ragen etwas über die Ecken von Uhr- und Logo-Kachel. Links grösser. */
 .hw__web { position: absolute; top: 0; height: auto; }
-.hw__web--l { left: 0;  width: 20vw; }
-.hw__web--r { right: 0; width: 14vw; transform: scaleX(-1); }
+.hw__web--l { left: 0;  width: 13vw; }
+.hw__web--r { right: 0; width: 10.5vw; transform: scaleX(-1); }
 .hw__spider { position: absolute; top: 0; left: calc(var(--mx) / 2 - 1.4vh); width: 2.8vh; will-change: transform; }
 .hw__spider--r { left: auto; right: calc(var(--mx) / 2 - 1.2vh); width: 2.4vh; }
 .hw__thread { display: block; width: 1px; margin: 0 auto; background: oklch(90% 0.01 280 / 0.5); }
 .hw__spider svg { display: block; width: 100%; height: auto; margin-top: -0.3vh; }
 .hw__pumpkin { position: absolute; bottom: 0.4vh; height: 5vh; width: auto;
   filter: drop-shadow(0 0 1.6vh oklch(70% 0.18 55 / 0.5)); }
-.hw__pumpkin--c { left: 50%; height: 4.4vh; transform: translateX(-50%); bottom: 0.5vh; }
-:root[data-mode="weather"][data-halloween="on"] .news { bottom: calc(var(--m) + 4vh); }
+.hw__field {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 9.5vh;
+  filter: drop-shadow(0 0 1.4vh oklch(65% 0.17 55 / 0.3));
+}
+:root[data-mode="weather"][data-halloween="on"] .news { bottom: calc(var(--m) + 6.4vh); }
 .hw__bat { position: absolute; left: 0; width: 5vw; height: auto; will-change: transform; }
 .hw__wing { transform-box: fill-box; transform-origin: 0% 55%; }
