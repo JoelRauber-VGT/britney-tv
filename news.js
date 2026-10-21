@@ -114,7 +114,8 @@
   /* Lange Titel + Texte dürfen den Fuss (QR) nie über den Fortschrittsbalken
      drücken: Summary zeilenweise kürzen, bis alles in die Karte passt. So bleibt
      der Abstand QR-Code → Balken auf jeder Karte gleich. */
-  const MAX_SUMMARY_LINES = 6;
+  /* Im Kachel-Layout bekommt der Text Vorrang (Bild schrumpft) → mehr Zeilen erlaubt */
+  const MAX_SUMMARY_LINES = document.documentElement.dataset.mode === 'weather' ? 10 : 6;
   function fitText(layer) {
     const body = layer.querySelector('.news__body');
     const sum = layer.querySelector('.news__summary');

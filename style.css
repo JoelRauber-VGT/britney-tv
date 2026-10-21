@@ -1238,6 +1238,25 @@ body {
 }
 :root[data-mode="weather"] .news::before { display: none; }
 :root[data-mode="weather"] .news__card { border-radius: var(--tile-r); }
+/* Karte im Kachel-Layout: Text hat Vorrang und ist immer ganz lesbar, das Bild
+   nimmt nur den Rest. Schriftgrössen richten sich nach Breite UND Höhe der Box
+   (min aus cqw/cqh), damit auch eine flache Box nichts abschneidet. */
+:root[data-mode="weather"] .news__media { flex: 1 1 0; min-height: 8cqh; }
+:root[data-mode="weather"] .news__body {
+  flex: 0 0 auto;
+  margin-top: -3cqh;
+  gap: min(2cqw, 1.6cqh);
+  padding: 0 min(6cqw, 5cqh) min(7cqw, 5.5cqh);
+}
+:root[data-mode="weather"] .news__pill,
+:root[data-mode="weather"] .news__badge { font-size: min(3cqw, 2.4cqh); }
+:root[data-mode="weather"] .news__pos   { font-size: min(2.8cqw, 2.2cqh); }
+:root[data-mode="weather"] .news__title { font-size: min(5.4cqw, 4.3cqh); }
+:root[data-mode="weather"] .news__summary { font-size: min(3.7cqw, 2.95cqh); }
+:root[data-mode="weather"] .news__foot { padding-top: min(2.4cqw, 1.8cqh); }
+:root[data-mode="weather"] .news__src { font-size: min(3.1cqw, 2.4cqh); }
+:root[data-mode="weather"] .news__qr img { width: min(19cqw, 15cqh); height: min(19cqw, 15cqh); }
+:root[data-mode="weather"] .news__qr figcaption { font-size: min(2.4cqw, 1.9cqh); }
 
 .bento {
   position: fixed;
@@ -1354,56 +1373,100 @@ body {
 .wx-day__temp b { color: var(--color-ink); font-weight: 500; }
 .wx-day__rain { display: none; }
 
-/* ── Strompreis ── */
-.tile--price { --accent: var(--news-energie); }
-.price__value {
-  margin: 0.6vh 0 0;
+/* ── Luft & Pollen ── */
+.tile--air {
+  --aqi-0: oklch(74% 0.13 165);   /* gut */
+  --aqi-1: oklch(78% 0.13 125);   /* ordentlich */
+  --aqi-2: oklch(82% 0.14 90);    /* mässig */
+  --aqi-3: oklch(72% 0.16 55);    /* schlecht */
+  --aqi-4: oklch(64% 0.19 25);    /* sehr schlecht */
+  --aqi-5: oklch(58% 0.17 340);   /* extrem */
+  --accent: var(--aqi-0);
+}
+.tile--air[data-aqi="1"] { --accent: var(--aqi-1); }
+.tile--air[data-aqi="2"] { --accent: var(--aqi-2); }
+.tile--air[data-aqi="3"] { --accent: var(--aqi-3); }
+.tile--air[data-aqi="4"] { --accent: var(--aqi-4); }
+.tile--air[data-aqi="5"] { --accent: var(--aqi-5); }
+
+.air__now { display: flex; align-items: baseline; gap: 1.2vh; margin-top: 0.6vh; }
+.air__value {
+  margin: 0;
   font-size: 4.8vh;
   font-weight: 300;
   line-height: 1;
   letter-spacing: -0.02em;
 }
-.price__unit { margin: 0.2vh 0 0; font-size: 1.25vh; color: var(--color-muted); white-space: nowrap; }
-.price__unit span { color: var(--accent); font-weight: 500; }
-.price__bars {
-  position: relative;
-  flex: 1;
-  min-height: 0;
+.air__level {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6vh;
+  font-size: 1.7vh;
+  font-weight: 500;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.air__dot { width: 1vh; height: 1vh; border-radius: 50%; background: var(--accent); }
+.air__unit { margin: 0.3vh 0 0; font-size: 1.2vh; color: var(--color-muted); white-space: nowrap; }
+.air__unit b { color: var(--color-ink); font-weight: 500; }
+
+.air__bars {
+  flex: none;
+  height: 3.6vh;
   display: flex;
   align-items: flex-end;
   gap: 0.2vh;
-  margin-top: 1vh;
-  padding-bottom: 1.8vh;
+  margin-top: 0.8vh;
 }
-.price__bar {
+.air__bar {
   flex: 1;
   border-radius: 0.25vh 0.25vh 0 0;
-  background: oklch(100% 0 0 / 0.24);
+  background: var(--aqi-0);
+  opacity: 0.45;
   transform-origin: 50% 100%;
 }
-.price__bar.is-past { background: oklch(100% 0 0 / 0.1); }
-.price__bar.is-low  { background: oklch(72% 0.12 160 / 0.75); }
-.price__bar.is-now  { background: var(--accent); }
-.price__axis {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+.air__bar[data-aqi="1"] { background: var(--aqi-1); }
+.air__bar[data-aqi="2"] { background: var(--aqi-2); }
+.air__bar[data-aqi="3"] { background: var(--aqi-3); }
+.air__bar[data-aqi="4"] { background: var(--aqi-4); }
+.air__bar[data-aqi="5"] { background: var(--aqi-5); }
+.air__bar.is-now { opacity: 1; }
+.air__axis {
   display: flex;
   justify-content: space-between;
+  margin-top: 0.4vh;
   font-size: 1.05vh;
   color: var(--color-muted);
 }
-.price__foot {
-  margin: 0.8vh 0 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.2vh 1.2vh;
+
+.air__sub {
+  margin: 1vh 0 0;
+  padding-top: 1vh;
+  border-top: 1px solid var(--color-rule-2);
   font-size: 1.15vh;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--color-muted);
+}
+.air__pollen { list-style: none; margin: 0.5vh 0 0; padding: 0; display: grid; gap: 0.35vh; }
+.pollen {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8vh;
+  min-width: 0;
+  font-size: 1.25vh;
   white-space: nowrap;
 }
-.price__foot b { color: var(--color-ink); font-weight: 500; }
+.pollen__name { color: var(--color-ink-2); }
+.pollen__txt { display: flex; align-items: center; gap: 0.5vh; color: var(--color-ink); }
+.pollen__txt i { width: 0.9vh; height: 0.9vh; border-radius: 50%; background: var(--aqi-1); }
+.pollen[data-lvl="2"] .pollen__txt i { background: var(--aqi-2); }
+.pollen[data-lvl="3"] .pollen__txt i { background: var(--aqi-3); }
+.pollen[data-lvl="4"] .pollen__txt i { background: var(--aqi-4); }
+.pollen--none { display: block; font-size: 1.3vh; color: var(--color-muted); }
 
 /* ── Halloween-Deko in den Seitenrändern (weather.halloween) ── */
 .hw { position: fixed; inset: 0; z-index: calc(var(--z-raised) + 2); pointer-events: none; overflow: hidden; }
@@ -1411,21 +1474,41 @@ body {
    ragen etwas über die Ecken von Uhr- und Logo-Kachel. Links grösser. */
 .hw__web { position: absolute; top: 0; height: auto; }
 .hw__web--l { left: 0;  width: 13vw; }
-.hw__web--r { right: 0; width: 10.5vw; transform: scaleX(-1); }
-.hw__spider { position: absolute; top: 0; left: calc(var(--mx) / 2 - 1.4vh); width: 2.8vh; will-change: transform; }
+.hw__web--r { right: 0; width: 11.5vw; transform: scaleX(-1); }
+.hw__spider { position: absolute; top: 0; left: calc(var(--mx) / 2 - 1.4vh); width: 2.8vh; }
 .hw__spider--r { left: auto; right: calc(var(--mx) / 2 - 1.2vh); width: 2.4vh; }
-.hw__thread { display: block; width: 1px; margin: 0 auto; background: oklch(90% 0.01 280 / 0.5); }
-.hw__spider svg { display: block; width: 100%; height: auto; margin-top: -0.3vh; }
+.hw__thread { display: block; width: 1px; margin: 0 auto; background: oklch(90% 0.01 280 / 0.5); transform-origin: 50% 0; will-change: transform; }
+.hw__spider svg { display: block; width: 100%; height: auto; margin-top: -0.3vh; will-change: transform; }
 .hw__pumpkin { position: absolute; bottom: 0.4vh; height: 5vh; width: auto;
   filter: drop-shadow(0 0 1.6vh oklch(70% 0.18 55 / 0.5)); }
+.hw__soil,
 .hw__field {
   position: absolute;
   left: 0;
   bottom: 0;
   width: 100%;
   height: 9.5vh;
-  filter: drop-shadow(0 0 1.4vh oklch(65% 0.17 55 / 0.3));
 }
+.hw__field { filter: drop-shadow(0 0 1.4vh oklch(65% 0.17 55 / 0.3)); }
 :root[data-mode="weather"][data-halloween="on"] .news { bottom: calc(var(--m) + 6.4vh); }
 .hw__bat { position: absolute; left: 0; width: 5vw; height: auto; will-change: transform; }
 .hw__wing { transform-box: fill-box; transform-origin: 0% 55%; }
+
+/* Halloween-Hintergrund HINTER den Kacheln (Mond + Hexe): sichtbar in den
+   Lücken und Rändern zwischen den Kacheln. */
+.hwb { position: fixed; inset: 0; z-index: var(--z-bg); pointer-events: none; overflow: hidden; }
+.hwb__moon {
+  position: absolute;
+  width: 19vh;
+  height: 19vh;
+  margin: -9.5vh 0 0 -9.5vh;
+  border-radius: 50%;
+  box-shadow: 0 0 5vh 1.5vh oklch(92% 0.04 90 / 0.28), 0 0 22vh 8vh oklch(85% 0.05 85 / 0.14);
+}
+.hwb__moon svg { display: block; width: 100%; height: 100%; }
+.hwf { position: fixed; inset: 0; z-index: var(--z-bg); pointer-events: none; overflow: hidden; }
+.hwf.is-front { z-index: calc(var(--z-raised) + 1); }
+.hwb__flyer { position: absolute; left: 0; top: 0; width: 24vw; will-change: transform; }
+.hwb__sparks > * { transform-box: fill-box; transform-origin: center; }
+.hwb__witch { display: block; width: 100%; height: auto; overflow: visible;
+  filter: drop-shadow(0 0 0.5vh oklch(85% 0.12 305 / 0.7)) drop-shadow(0 0 2vh oklch(70% 0.17 305 / 0.35)); will-change: transform; }

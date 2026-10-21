@@ -41,11 +41,10 @@ const CONFIG = {
     halloween:      'auto',
   },
 
-  /* Strompreis-Kachel (nur im Wetter-Modus). Day-Ahead-Börsenpreis der
-   * Gebotszone via energy-charts.info, abgeholt über serve.py (/api/price). */
-  price: {
+  /* Luft & Pollen-Kachel (nur im Wetter-Modus) für den Ort aus «weather».
+   * Daten: Open-Meteo Air Quality (gratis, ohne Key). */
+  air: {
     show:           true,
-    zone:           'CH',
     refreshMinutes: 30,
   },
 

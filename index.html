@@ -31,8 +31,8 @@
   <div class="vignette" aria-hidden="true"></div>
 
   <!-- Wetter-Modus (config: weather.show): Kachel-Raster über den ganzen Schirm.
-       Oben: Wetter | Uhr + Strompreis. Unten (⅔): News. Inhalt bauen
-       weather.js und price.js. -->
+       Oben: Wetter | Uhr + Luft & Pollen. Unten (⅔): News. Inhalt bauen
+       weather.js und air.js. -->
   <section class="bento" id="wx" hidden>
     <article class="tile tile--clock">
       <p class="clock__time" id="wxClock"></p>
@@ -57,12 +57,17 @@
       <div class="wx-days" id="wxDays"></div>
     </article>
 
-    <article class="tile tile--price" id="price">
-      <p class="tile__label">Strompreis CH</p>
-      <p class="price__value" id="priceNow">–</p>
-      <p class="price__unit">€/MWh · <span id="priceHour"></span></p>
-      <div class="price__bars" id="priceBars"></div>
-      <p class="price__foot" id="priceFoot"></p>
+    <article class="tile tile--air" id="air">
+      <p class="tile__label">Luft &amp; Pollen</p>
+      <div class="air__now">
+        <p class="air__value" id="airNow">–</p>
+        <p class="air__level"><i class="air__dot"></i><span id="airLevel"></span></p>
+      </div>
+      <p class="air__unit">Luftqualität · UV <b id="airUv">–</b></p>
+      <div class="air__bars" id="airBars"></div>
+      <div class="air__axis" id="airAxis"></div>
+      <p class="air__sub">Pollen heute</p>
+      <ul class="air__pollen" id="airPollen"></ul>
     </article>
   </section>
 
@@ -269,7 +274,7 @@
   <script src="./app.js"></script>
   <script src="./news.js"></script>
   <script src="./weather.js"></script>
-  <script src="./price.js"></script>
+  <script src="./air.js"></script>
 
 </body>
 </html>

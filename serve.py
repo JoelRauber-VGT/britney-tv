@@ -106,39 +106,6 @@ EXTRA_TYPES = {
 CACHEABLE = (".mp4", ".webm", ".woff2", ".png", ".jpg", ".jpeg", ".webp", ".gif")
 
 
-_price_cache = {}          # zone -> (zeitpunkt, body)
-_PRICE_TTL = 20 * 60      # Sekunden
-
-
-def _price(zone):
-    """Day-Ahead-Preise heute + morgen (sofern publiziert), 20 min gecacht.
-    Bei Fehlern bleibt der letzte gute Stand bestehen."""
-    import datetime as _dt
-    import time as _time
-    import urllib.request as _ur
-
-    hit = _price_cache.get(zone)
-    if hit and _time.time() - hit[0] < _PRICE_TTL:
-        return hit[1]
-    today = _dt.date.today()
-    url = ("https://api.energy-charts.info/price?bzn=%s&start=%s&end=%s"
-           % (zone, today.isoformat(), (today + _dt.timedelta(days=1)).isoformat()))
-    try:
-        req = _ur.Request(url, headers={"User-Agent": "britney-kiosk"})
-        with _ur.urlopen(req, timeout=15) as r:
-            raw = json.loads(r.read().decode())
-        body = json.dumps({
-            "unit": raw.get("unit", "EUR / MWh"),
-            "unix_seconds": raw["unix_seconds"],
-            "price": raw["price"],
-        }).encode()
-        _price_cache[zone] = (_time.time(), body)
-        return body
-    except Exception as e:  # Netz weg, API down … → letzter Stand
-        print("[price]", e, file=sys.stderr)
-        return hit[1] if hit else None
-
-
 class Handler(SimpleHTTPRequestHandler):
     """Statischer Handler mit Range-Support (Video-Seeking/Loop) und schnellem I/O.
 
@@ -153,21 +120,6 @@ class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         route = self.path.split("?", 1)[0]
         # Bewegungs-Zaehler fuer die Seite (gleicher Origin)
-        # Strompreis (Day-Ahead) für die Kachel – Proxy, weil energy-charts.info
-        # keine Browser-Abfragen von fremden Seiten erlaubt (CORS).
-        if route == "/api/price":
-            zone = "CH"
-            if "?" in self.path:
-                for part in self.path.split("?", 1)[1].split("&"):
-                    k, _, v = part.partition("=")
-                    if k == "zone" and v.isalpha() and len(v) <= 6:
-                        zone = v.upper()
-            body = _price(zone)
-            if body is None:
-                self.send_error(502, "Preisdaten nicht verfuegbar")
-            else:
-                self._send_json(body)
-            return
         if route == "/motion":
             with _motion_lock:
                 body = json.dumps({"count": _motion_count}).encode()
