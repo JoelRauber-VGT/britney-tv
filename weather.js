@@ -324,8 +324,9 @@
     hw.className = 'hw';
     hw.setAttribute('aria-hidden', 'true');
     hw.innerHTML = WEB('l') + WEB('r') + SPIDER('', '24vh') + SPIDER('hw__spider--r', '52vh')
-      + PUMPKIN('hw__pumpkin--l') + PUMPKIN('hw__pumpkin--r') + BAT + BAT;
+      + PUMPKIN('hw__pumpkin--c') + BAT + BAT;
     document.body.appendChild(hw);
+    document.documentElement.dataset.halloween = 'on';   /* News rückt hoch → Platz für den Kürbis */
 
     if (!reduced) {
       hw.querySelectorAll('.hw__spider').forEach((sp, i) => sp.animate(

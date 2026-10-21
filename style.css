@@ -1416,7 +1416,7 @@ body {
 .hw__spider svg { display: block; width: 100%; height: auto; margin-top: -0.3vh; }
 .hw__pumpkin { position: absolute; bottom: 0.4vh; height: 5vh; width: auto;
   filter: drop-shadow(0 0 1.6vh oklch(70% 0.18 55 / 0.5)); }
-.hw__pumpkin--l { left: 0.4vw; }
-.hw__pumpkin--r { right: 0.4vw; height: 4vh; }
+.hw__pumpkin--c { left: 50%; height: 4.4vh; transform: translateX(-50%); bottom: 0.5vh; }
+:root[data-mode="weather"][data-halloween="on"] .news { bottom: calc(var(--m) + 4vh); }
 .hw__bat { position: absolute; left: 0; width: 5vw; height: auto; will-change: transform; }
 .hw__wing { transform-box: fill-box; transform-origin: 0% 55%; }
