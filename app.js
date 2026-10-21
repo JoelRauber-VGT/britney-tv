@@ -98,9 +98,11 @@ if (G.show) {
           { transform: 'translate(70vw, 8vh)' },
           { transform: 'translate(120vw, 0vh)' },
         ], { duration: dur, delay: -i * 6000, iterations: Infinity, easing: 'linear' });
-        b.querySelector('path').animate([
-          { transform: 'scaleY(1)' }, { transform: 'scaleY(0.35)' }, { transform: 'scaleY(1)' },
-        ], { duration: 260 + i * 60, iterations: Infinity });
+        b.querySelectorAll('.grave__wing').forEach((w) => w.animate([
+          { transform: 'rotate(18deg) scaleY(0.9)' },
+          { transform: 'rotate(-28deg) scaleY(1)' },
+          { transform: 'rotate(18deg) scaleY(0.9)' },
+        ], { duration: 420 + i * 90, iterations: Infinity, easing: 'ease-in-out' }));
       });
       /* Spinne: seilt sich langsam ab und klettert wieder hoch */
       const sp = $('graveSpider');

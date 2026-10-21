@@ -954,7 +954,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  padding-bottom: 7vh;
+  padding-bottom: 0;          /* Gras läuft bis an den unteren Rand */
   pointer-events: none;
 }
 .grave[hidden] { display: none; }
@@ -1065,20 +1065,19 @@ body {
 .grave__ground {
   position: relative;
   width: 100vw;
-  height: 9vh;
+  height: 11vh;
   margin-top: -5vh;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   gap: 4vw;
   background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60' viewBox='0 0 120 60'%3E%3Cg fill='%231c3d23'%3E%3Cpath d='M0 60 6 22 10 60zM12 60 22 12 24 60zM26 60 30 30 36 60zM38 60 50 8 50 60zM52 60 58 26 64 60zM66 60 76 16 78 60zM80 60 84 34 90 60zM92 60 104 10 104 60zM106 60 112 28 120 60z'/%3E%3C/g%3E%3Cg fill='%23295532'%3E%3Cpath d='M4 60 14 30 16 60zM30 60 40 20 42 60zM58 60 66 34 70 60zM84 60 96 22 96 60zM110 60 118 36 120 60z'/%3E%3C/g%3E%3C/svg%3E") bottom / auto 100% repeat-x,
-    linear-gradient(180deg, transparent 72%, oklch(13% 0.03 150 / 0.9) 72%, oklch(13% 0.03 150 / 0) 100%);
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60' viewBox='0 0 120 60'%3E%3Cg fill='%231c3d23'%3E%3Cpath d='M0 60 6 22 10 60zM12 60 22 12 24 60zM26 60 30 30 36 60zM38 60 50 8 50 60zM52 60 58 26 64 60zM66 60 76 16 78 60zM80 60 84 34 90 60zM92 60 104 10 104 60zM106 60 112 28 120 60z'/%3E%3C/g%3E%3Cg fill='%23295532'%3E%3Cpath d='M4 60 14 30 16 60zM30 60 40 20 42 60zM58 60 66 34 70 60zM84 60 96 22 96 60zM110 60 118 36 120 60z'/%3E%3C/g%3E%3C/svg%3E") bottom / auto 100% repeat-x;
 }
 .grave__candle {
   position: relative;
   width: 3.2vw; height: 7vh;
-  margin-bottom: 1.5vh;
+  margin-bottom: 3vh;
   border-radius: 0.5vh;
   background: linear-gradient(90deg, oklch(88% 0.03 85), oklch(96% 0.02 85) 40%, oklch(78% 0.04 85));
   box-shadow: 0 0 6vh 1vh oklch(80% 0.15 70 / 0.22);
@@ -1097,7 +1096,7 @@ body {
   transform-origin: 50% 90%;
   will-change: transform, opacity;
 }
-.grave__flower { height: 11vh; width: auto; margin-bottom: 1vh; }
+.grave__flower { height: 11vh; width: auto; margin-bottom: 2.5vh; }
 .grave__flower--wilted { height: 10vh; }
 
 /* Geist oben rechts, eigener Layer → Stein wird nie neu gezeichnet */
@@ -1146,17 +1145,25 @@ body {
   width: 12vw; height: auto;
   will-change: transform;
 }
-.grave__bat path { transform-origin: 50% 40%; transform-box: fill-box; }
+.grave__wing { transform-box: fill-box; transform-origin: 0% 55%; }  /* Gelenk an der Schulter */
 .grave__bat:nth-child(2) { top: 18vh; width: 8vw; }
 .grave__bat:nth-child(3) { top: 3vh;  width: 10vw; }
 
+/* Netz klebt in der Ecke Steinflanke/Sockel: Haltefäden enden genau an der
+   Steinkante, alles ausserhalb wird von .grave__clip (Steinform) abgeschnitten. */
+.grave__clip {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
 .grave__web {
   position: absolute;
-  bottom: 1.5%;
-  left: 1.5%;
-  width: 30%;
+  left: 0;
+  bottom: 0;
+  width: 42%;
   height: auto;
-  transform: scaleY(-1);   /* Netz sitzt in der unteren linken Ecke */
 }
 .grave__spider {
   position: absolute;
@@ -1175,7 +1182,7 @@ body {
 }
 .grave__spider svg { display: block; width: 100%; height: auto; }
 
-.grave__pumpkin { height: 10vh; width: auto; margin-bottom: 0.6vh;
+.grave__pumpkin { height: 10vh; width: auto; margin-bottom: 2vh;
   filter: drop-shadow(0 0 2.5vh oklch(70% 0.18 55 / 0.45)); }
 .grave__pumpkin--small { height: 7vh; }
 
