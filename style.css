@@ -934,3 +934,190 @@ body {
 /* IQ ausgeblendet (config: iq.show = false): Logo-Bühne rückt in den frei
    gewordenen Platz unten; die Mitte bleibt unverändert. */
 :root[data-iq="off"] .stage { padding-bottom: 8vh; }
+
+/* ════════════════════════════════════════════════════════════════
+   GRABSTEIN-MODUS (config: grave.show) — ganzer Schirm, alles andere aus
+   ════════════════════════════════════════════════════════════════ */
+:root[data-mode="grave"] .hud,
+:root[data-mode="grave"] .stage { display: none !important; }
+
+.grave {
+  --stone-hi:  oklch(66% 0.014 285);
+  --stone-lo:  oklch(42% 0.018 285);
+  --engrave:   oklch(25% 0.02 285);
+  --engrave-hl: oklch(82% 0.01 285 / 0.45);
+  --gold:      oklch(82% 0.11 85);
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-raised);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 7vh;
+  pointer-events: none;
+}
+.grave[hidden] { display: none; }
+
+/* Stein mit Rundbogen; Körnung als einmal gerastertes SVG-Rauschen (Pi-tauglich) */
+.grave__stone {
+  position: relative;
+  width: min(78vw, 46vh);
+  height: 64vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6vh;
+  padding: 10vh 7vw 6vh;
+  text-align: center;
+  border-radius: 50% 50% 1.2vh 1.2vh / 24% 24% 1.2vh 1.2vh;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(120% 70% at 30% 18%, oklch(74% 0.012 285 / 0.55), transparent 60%),
+    linear-gradient(180deg, var(--stone-hi), var(--stone-lo));
+  box-shadow:
+    inset 0.8vw 0.8vw 1.6vw oklch(85% 0.01 285 / 0.25),
+    inset -1vw -1.2vh 2vw oklch(15% 0.02 285 / 0.55),
+    0 2vh 6vh oklch(0% 0 0 / 0.6),
+    0 0 12vh oklch(60% 0.12 290 / 0.18);
+  color: var(--engrave);
+  text-shadow: 0 0.12vh 0 var(--engrave-hl), 0 -0.08vh 0 oklch(10% 0.02 285 / 0.5);
+}
+.grave__crack { position: absolute; inset: 0; width: 100%; height: 100%; }
+.grave__moss {
+  position: absolute;
+  bottom: -0.5vh;
+  width: 22vw; height: 9vh;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, oklch(40% 0.07 140 / 0.55), oklch(36% 0.06 140 / 0.25) 60%, transparent);
+  filter: blur(0.3vh);
+}
+.grave__moss--l { left: -3vw; }
+.grave__moss--r { right: -5vw; width: 14vw; height: 6vh; }
+
+.grave__kicker {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 2.6vh;
+  font-weight: 500;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+.grave__name {
+  margin: 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  font-size: 8vh;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-shadow: 0 0.2vh 0 oklch(30% 0.05 70), 0 0 3vh oklch(85% 0.12 85 / 0.35);
+}
+.grave__sub {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 2vh;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.grave__dates {
+  margin: 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 4.2vh;
+  letter-spacing: 0.06em;
+}
+.grave__orn { width: 46%; height: auto; color: var(--engrave); opacity: 0.8; margin: 1vh 0; }
+.grave__epitaph {
+  margin: 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-style: italic;
+  font-size: 3.3vh;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+.grave__note {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 2.2vh;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+.grave__rip {
+  margin: 2vh 0 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 3.6vh;
+  letter-spacing: 0.3em;
+}
+
+/* Sockel */
+.grave__plinth {
+  width: min(90vw, 54vh);
+  height: 3.6vh;
+  border-radius: 0.6vh;
+  background: linear-gradient(180deg, oklch(56% 0.014 285), oklch(34% 0.018 285));
+  box-shadow: 0 1.5vh 4vh oklch(0% 0 0 / 0.6);
+}
+
+/* Boden: Grasbüschel als Kachel, davor Kerzen und Blumen */
+.grave__ground {
+  position: relative;
+  width: 100vw;
+  height: 9vh;
+  margin-top: -5vh;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4vw;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60' viewBox='0 0 120 60'%3E%3Cg fill='%231c3d23'%3E%3Cpath d='M0 60 6 22 10 60zM12 60 22 12 24 60zM26 60 30 30 36 60zM38 60 50 8 50 60zM52 60 58 26 64 60zM66 60 76 16 78 60zM80 60 84 34 90 60zM92 60 104 10 104 60zM106 60 112 28 120 60z'/%3E%3C/g%3E%3Cg fill='%23295532'%3E%3Cpath d='M4 60 14 30 16 60zM30 60 40 20 42 60zM58 60 66 34 70 60zM84 60 96 22 96 60zM110 60 118 36 120 60z'/%3E%3C/g%3E%3C/svg%3E") bottom / auto 100% repeat-x,
+    linear-gradient(180deg, transparent 72%, oklch(13% 0.03 150) 72%, oklch(13% 0.03 150 / 0) 100%);
+}
+.grave__candle {
+  position: relative;
+  width: 3.2vw; height: 7vh;
+  margin-bottom: 1.5vh;
+  border-radius: 0.5vh;
+  background: linear-gradient(90deg, oklch(88% 0.03 85), oklch(96% 0.02 85) 40%, oklch(78% 0.04 85));
+  box-shadow: 0 0 6vh 1vh oklch(80% 0.15 70 / 0.22);
+}
+.grave__candle--r { height: 5vh; }
+.grave__flame {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  width: 2.2vw; height: 3.8vh;
+  margin-left: -1.1vw;
+  margin-bottom: 0.3vh;
+  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  background: radial-gradient(60% 55% at 50% 72%, oklch(98% 0.05 95), oklch(85% 0.17 75) 45%, oklch(65% 0.2 40 / 0.0) 80%);
+  box-shadow: 0 0 3vh 1vh oklch(80% 0.16 70 / 0.35);
+  transform-origin: 50% 90%;
+  will-change: transform, opacity;
+}
+.grave__flower { height: 11vh; width: auto; margin-bottom: 1vh; }
+.grave__flower--wilted { height: 10vh; }
+
+/* Geist oben rechts, eigener Layer → Stein wird nie neu gezeichnet */
+.grave__ghost {
+  position: absolute;
+  top: 7vh;
+  right: 9vw;
+  width: 13vw;
+  height: auto;
+  filter: drop-shadow(0 0 2.5vh oklch(90% 0.05 270 / 0.45));
+  will-change: transform;
+}
+
+.grave__footer {
+  margin: 3vh 0 0;
+  max-width: 80vw;
+  font-family: var(--font-body);
+  font-size: 1.9vh;
+  font-weight: 300;
+  color: var(--color-muted);
+  text-align: center;
+  text-wrap: balance;
+}

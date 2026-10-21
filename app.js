@@ -55,6 +55,42 @@ if ($('caption')) $('caption').innerHTML = cfg.collab.caption.replace(
   /»(.+?)«/, '<strong>$1</strong>');
 
 /* ════════════════════════════════════════════════════════════════
+ * 0 · GRABSTEIN-MODUS (config: grave.show)
+ * Ganzer Schirm = Grabstein. News + Video werden aus dem DOM genommen,
+ * damit news.js gar nicht erst startet. Bewegung (Kerzen, Geist) läuft
+ * über die Web Animations API, weil style.css CSS-Animationen global abschaltet.
+ * ════════════════════════════════════════════════════════════════ */
+const G = cfg.grave || {};
+if (G.show) {
+  document.documentElement.dataset.mode = 'grave';
+  $('grave').hidden = false;
+  for (const id of ['news', 'britney']) { const n = $(id); if (n) n.remove(); }
+  const set = (id, v) => { const el = $(id); if (!el) return; if (v) el.textContent = v; else el.remove(); };
+  set('graveKicker', G.kicker); set('graveName', G.name); set('graveSub', G.sub);
+  set('graveDates', G.dates);   set('graveEpitaph', G.epitaph); set('graveNote', G.note);
+  set('graveFooter', G.footer);
+
+  if (G.animate !== false && !reducedMotion) {
+    /* Kerzen: unregelmässiges Flackern, beide leicht versetzt */
+    document.querySelectorAll('.grave__flame').forEach((f, i) => {
+      f.animate([
+        { transform: 'scale(1, 1) rotate(-2deg)',    opacity: 0.95 },
+        { transform: 'scale(0.92, 1.08) rotate(2deg)', opacity: 1 },
+        { transform: 'scale(1.04, 0.94) rotate(-1deg)', opacity: 0.85 },
+        { transform: 'scale(0.96, 1.05) rotate(3deg)', opacity: 1 },
+        { transform: 'scale(1, 1) rotate(-2deg)',    opacity: 0.95 },
+      ], { duration: 1700 + i * 430, iterations: Infinity, easing: 'ease-in-out' });
+    });
+    /* Geist: schwebt gemächlich auf und ab und kippt leicht */
+    $('graveGhost').animate([
+      { transform: 'translate(0, 0) rotate(-4deg)' },
+      { transform: 'translate(-1.5vw, -2.2vh) rotate(3deg)' },
+      { transform: 'translate(0, 0) rotate(-4deg)' },
+    ], { duration: 7000, iterations: Infinity, easing: 'ease-in-out' });
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
  * 1 · COUNTDOWN
  * ════════════════════════════════════════════════════════════════ */
 

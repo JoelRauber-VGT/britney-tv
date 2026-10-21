@@ -30,6 +30,64 @@
   </div>
   <div class="vignette" aria-hidden="true"></div>
 
+  <!-- Grabstein-Modus (config: grave.show). Füllt den ganzen Schirm,
+       alles andere wird dann ausgeblendet. Texte kommen aus config.js. -->
+  <section class="grave" id="grave" hidden aria-label="Grabstein">
+    <svg class="grave__ghost" id="graveGhost" viewBox="0 0 120 150" aria-hidden="true">
+      <path d="M60 6C29 6 12 30 12 62v76l12-10 12 12 12-12 12 12 12-12 12 12 12-12 12 10V62C108 30 91 6 60 6z"
+            fill="oklch(95% 0.02 270 / 0.88)"/>
+      <ellipse cx="44" cy="58" rx="7" ry="10" fill="oklch(20% 0.03 270)"/>
+      <ellipse cx="76" cy="58" rx="7" ry="10" fill="oklch(20% 0.03 270)"/>
+      <ellipse cx="60" cy="86" rx="9" ry="7" fill="oklch(20% 0.03 270)"/>
+    </svg>
+
+    <div class="grave__stone">
+      <svg class="grave__crack" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <polyline points="90,9 87,17 91,23 85,31 88,37 84,44" fill="none"
+                  stroke="oklch(22% 0.02 280 / 0.55)" stroke-width="0.6" vector-effect="non-scaling-stroke"/>
+      </svg>
+      <span class="grave__moss grave__moss--l" aria-hidden="true"></span>
+      <span class="grave__moss grave__moss--r" aria-hidden="true"></span>
+
+      <p class="grave__kicker" id="graveKicker"></p>
+      <h1 class="grave__name" id="graveName"></h1>
+      <p class="grave__sub" id="graveSub"></p>
+      <p class="grave__dates" id="graveDates"></p>
+      <svg class="grave__orn" viewBox="0 0 200 20" aria-hidden="true">
+        <path d="M0 10h80M120 10h80" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M100 1v18M92 7h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <p class="grave__epitaph" id="graveEpitaph"></p>
+      <p class="grave__note" id="graveNote"></p>
+      <p class="grave__rip">R.I.P.</p>
+    </div>
+    <div class="grave__plinth" aria-hidden="true"></div>
+
+    <div class="grave__ground" aria-hidden="true">
+      <div class="grave__candle grave__candle--l"><span class="grave__flame"></span></div>
+      <svg class="grave__flower grave__flower--up" viewBox="0 0 60 120">
+        <path d="M30 120V48" stroke="oklch(48% 0.12 145)" stroke-width="4"/>
+        <path d="M30 86c-12-4-18-14-18-22 10 2 16 10 18 22z" fill="oklch(52% 0.13 145)"/>
+        <g fill="oklch(72% 0.17 15)">
+          <circle cx="30" cy="22" r="11"/><circle cx="16" cy="34" r="11"/><circle cx="44" cy="34" r="11"/>
+          <circle cx="21" cy="50" r="11"/><circle cx="39" cy="50" r="11"/>
+        </g>
+        <circle cx="30" cy="37" r="8" fill="oklch(86% 0.15 90)"/>
+      </svg>
+      <svg class="grave__flower grave__flower--wilted" viewBox="0 0 90 120">
+        <path d="M20 120V70c0-30 30-46 52-34" fill="none" stroke="oklch(45% 0.08 120)" stroke-width="4"/>
+        <g fill="oklch(55% 0.10 40)">
+          <ellipse cx="74" cy="50" rx="7" ry="11"/><ellipse cx="64" cy="54" rx="6" ry="10" transform="rotate(25 64 54)"/>
+          <ellipse cx="84" cy="54" rx="6" ry="10" transform="rotate(-25 84 54)"/>
+        </g>
+        <circle cx="74" cy="42" r="6" fill="oklch(62% 0.10 75)"/>
+      </svg>
+      <div class="grave__candle grave__candle--r"><span class="grave__flame"></span></div>
+    </div>
+
+    <p class="grave__footer" id="graveFooter"></p>
+  </section>
+
   <!-- Mitte: News-Widget (Standard) ODER Britney-Video — umschaltbar über
        config.js (center: 'news' | 'video'). Das jeweils andere wird entfernt. -->
   <section class="news" id="news" aria-label="KI- und Energie-News" aria-live="off">

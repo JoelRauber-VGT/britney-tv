@@ -28,6 +28,21 @@ const CONFIG = {
     },
   },
 
+  /* Grabstein-Modus: Projekt wurde von Innosuisse abgelehnt.
+   * show: true  → ganzer Bildschirm = Grabstein (keine News, kein Countdown)
+   * show: false → normales Dashboard */
+  grave: {
+    show:    true,
+    kicker:  'In Gedenken an',
+    name:    'Britney',
+    sub:     'KI-Forschungsprojekt · VGT × FHNW',
+    dates:   '2026 – 2026',
+    epitaph: 'Oops!… Innosuisse did it again.',
+    note:    'Sie hätte einen IQ von 180 erreicht. Ganz bestimmt.',
+    footer:  'Statt Blumen: Förderanträge werden weiterhin gerne entgegengenommen.',
+    animate: true,   /* Kerzen flackern, Geist schwebt. false = komplett still */
+  },
+
   iq: {
     show:    false,  /* IQ-Anzeige unten ein-/ausblenden */
     current: 20,   /* 0 = noch keine Daten → zeigt »--«. Später hochsetzen (z. B. britney.setIQ(60)). */
