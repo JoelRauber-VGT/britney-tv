@@ -1,14 +1,13 @@
 /* ════════════════════════════════════════════════════════════════
- * BRITNEY DASHBOARD · WETTER (oben, bei CONFIG.weather.show)
+ * BRITNEY DASHBOARD · WETTER + UHR (Kacheln oben, bei CONFIG.weather.show)
  *
- * Holt die Vorhersage von Open-Meteo (gratis, ohne Key) und zeigt:
- *  - Uhr + Datum
- *  - Jetzt: animiertes Wetter-Icon, Temperatur, Beschreibung, Fakten
+ * Wetter von Open-Meteo (gratis, ohne Key):
+ *  - Jetzt: Linien-Icon, Temperatur, Beschreibung, gefühlt/Wind
  *  - Nächste 24 h: Temperaturkurve + Regenwahrscheinlichkeit
- *  - 7 Tage: Icon, Min/Max als Balken auf einer gemeinsamen Wochenskala
+ *  - Nächste 5 Tage: Icon + Max/Min
+ * Uhr-Kachel: Zeit, Datum, Kalenderwoche.
  *
- * Bewegung läuft über die Web Animations API (style.css schaltet CSS-
- * Animationen global ab). Nur transform/opacity → GPU, Pi-tauglich.
+ * Bewegung über die Web Animations API (CSS-Animationen sind global aus).
  * Netzfehler → letzte Daten bleiben stehen (auch über Reloads, localStorage).
  * ════════════════════════════════════════════════════════════════ */
 
@@ -24,9 +23,9 @@
 
   const url = 'https://api.open-meteo.com/v1/forecast'
     + `?latitude=${W.lat}&longitude=${W.lon}`
-    + '&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day,relative_humidity_2m'
-    + '&hourly=temperature_2m,precipitation_probability,weather_code,is_day'
-    + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset'
+    + '&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day'
+    + '&hourly=temperature_2m,precipitation_probability'
+    + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max'
     + `&timezone=${encodeURIComponent(TZ)}&forecast_days=7`;
 
   /* ── WMO-Code → Icon-Art + Text ── */
@@ -51,140 +50,87 @@
     86: 'Starke Schneeschauer', 95: 'Gewitter', 96: 'Gewitter mit Hagel', 99: 'Gewitter mit Hagel',
   };
 
-  /* ── SVG-Helfer ── */
+  /* ── Linien-Icons (ein Strich, currentColor; Akzent nur für Sonne/Regen) ── */
   function el(tag, attrs = {}, parent) {
     const n = document.createElementNS(NS, tag);
     for (const k in attrs) n.setAttribute(k, attrs[k]);
     if (parent) parent.appendChild(n);
     return n;
   }
-  const loop = (node, frames, opts) => {
-    if (reduced || !node) return;
-    node.style.transformBox = 'fill-box';
-    node.style.transformOrigin = 'center';
-    node.animate(frames, { iterations: Infinity, easing: 'ease-in-out', ...opts });
-  };
+  const CLOUD = 'M29 76h43a17 17 0 0 0 1-34 23 23 0 0 0-44 5 15 15 0 0 0 0 29z';
+  const SUN_C = 'var(--wx-sun)', RAIN_C = 'var(--wx-rain)';
 
-  const C = {
-    sun: 'oklch(86% 0.16 85)', sunCore: 'oklch(93% 0.12 95)',
-    cloud: 'oklch(93% 0.012 265)', cloudDark: 'oklch(72% 0.02 265)',
-    rain: 'oklch(74% 0.13 235)', snow: 'oklch(97% 0.01 250)', bolt: 'oklch(88% 0.17 95)',
-    moon: 'oklch(92% 0.04 95)',
-  };
-
-  function sun(svg, cx, cy, r, animate) {
-    const g = el('g', {}, svg);
-    const rays = el('g', { stroke: C.sun, 'stroke-width': r * 0.16, 'stroke-linecap': 'round' }, g);
-    for (let i = 0; i < 8; i++) {
-      const a = (i * Math.PI) / 4;
-      el('line', {
-        x1: cx + Math.cos(a) * r * 1.45, y1: cy + Math.sin(a) * r * 1.45,
-        x2: cx + Math.cos(a) * r * 1.95, y2: cy + Math.sin(a) * r * 1.95,
-      }, rays);
-    }
-    el('circle', { cx, cy, r, fill: C.sunCore, stroke: C.sun, 'stroke-width': r * 0.14 }, g);
-    if (animate) {
-      loop(rays, [{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }],
-        { duration: 40000, easing: 'linear' });
-      loop(g, [{ transform: 'scale(1)' }, { transform: 'scale(1.05)' }, { transform: 'scale(1)' }],
-        { duration: 5000 });
-    }
-    return g;
-  }
-  function moon(svg, animate) {
-    const g = el('g', {}, svg);
-    el('path', { d: 'M58 18a30 30 0 1 0 24 46 26 26 0 1 1-24-46z', fill: C.moon }, g);
-    for (const [x, y, r] of [[22, 22, 2.2], [80, 30, 1.6], [30, 82, 1.8]]) {
-      const s = el('circle', { cx: x, cy: y, r, fill: C.snow }, svg);
-      if (animate) loop(s, [{ opacity: 1 }, { opacity: 0.2 }, { opacity: 1 }],
-        { duration: 2200 + x * 30 });
-    }
-    return g;
-  }
-  function cloud(svg, x, y, s, fill, animate) {
-    const g = el('g', { transform: `translate(${x} ${y}) scale(${s})`, fill }, svg);
-    const inner = el('g', {}, g);
-    el('circle', { cx: 34, cy: 56, r: 15 }, inner);
-    el('circle', { cx: 52, cy: 44, r: 20 }, inner);
-    el('circle', { cx: 70, cy: 56, r: 14 }, inner);
-    el('rect', { x: 20, y: 54, width: 64, height: 17, rx: 8.5 }, inner);
-    if (animate) loop(inner, [{ transform: 'translateX(-2.5px)' }, { transform: 'translateX(2.5px)' },
-      { transform: 'translateX(-2.5px)' }], { duration: 6000 });
-    return g;
-  }
-  function drops(svg, n, color, len, animate, snowy) {
-    for (let i = 0; i < n; i++) {
-      const x = 32 + i * (40 / Math.max(n - 1, 1));
-      const d = snowy
-        ? el('circle', { cx: x, cy: 80, r: 3.2, fill: color }, svg)
-        : el('line', { x1: x, y1: 76, x2: x - 3, y2: 76 + len, stroke: color,
-            'stroke-width': 4, 'stroke-linecap': 'round' }, svg);
-      if (animate) {
-        d.animate([
-          { transform: 'translate(0, -6px)', opacity: 0 },
-          { transform: 'translate(0, 0)', opacity: 1, offset: 0.25 },
-          { transform: `translate(${snowy ? 3 : -2}px, 14px)`, opacity: 0 },
-        ], { duration: snowy ? 2600 : 1000, delay: i * (snowy ? 650 : 260), iterations: Infinity });
-      }
-    }
-  }
-
-  /* Komplettes Icon als <svg>. animate = nur für das grosse Jetzt-Icon. */
-  function icon(code, isDay, animate = false) {
-    const svg = el('svg', { viewBox: '0 0 100 100', class: 'wx-ico', 'aria-hidden': 'true' });
+  function icon(code, isDay, animate) {
+    const svg = el('svg', { viewBox: '0 0 100 100', class: 'wx-ico', fill: 'none', stroke: 'currentColor',
+      'stroke-width': 5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' });
     const k = kindOf(code);
     const day = isDay !== 0;
-    if (k === 'clear') { day ? sun(svg, 50, 50, 19, animate) : moon(svg, animate); return svg; }
+    const anim = animate && !reduced;
+
+    const sun = (cx, cy, r) => {
+      const g = el('g', { stroke: SUN_C }, svg);
+      el('circle', { cx, cy, r }, g);
+      const rays = el('g', {}, g);
+      for (let i = 0; i < 8; i++) {
+        const a = (i * Math.PI) / 4;
+        el('line', { x1: cx + Math.cos(a) * r * 1.55, y1: cy + Math.sin(a) * r * 1.55,
+          x2: cx + Math.cos(a) * r * 2, y2: cy + Math.sin(a) * r * 2 }, rays);
+      }
+      if (anim) {
+        rays.style.transformOrigin = `${cx}px ${cy}px`;
+        rays.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(45deg)' }],
+          { duration: 12000, iterations: Infinity });
+      }
+    };
+    const moon = (cx, cy, r) => el('path', {
+      d: `M${cx + r * 0.3} ${cy - r}a${r} ${r} 0 1 0 ${r * 0.7} ${r * 1.55}a${r * 0.8} ${r * 0.8} 0 0 1-${r * 0.7}-${r * 1.55}z`,
+      stroke: SUN_C }, svg);
+
+    if (k === 'clear') { day ? sun(50, 50, 16) : moon(46, 50, 26); return svg; }
     if (k === 'partly') {
-      if (day) sun(svg, 36, 36, 14, animate); else el('path', { d: 'M40 12a20 20 0 1 0 16 31 17 17 0 1 1-16-31z', fill: C.moon }, svg);
-      cloud(svg, 8, 10, 0.95, C.cloud, animate);
+      day ? sun(36, 34, 11) : moon(34, 32, 16);
+      el('path', { d: CLOUD, transform: 'translate(8 6) scale(.92)' }, svg);
       return svg;
+    }
+    el('path', { d: CLOUD, transform: k === 'cloud' ? '' : 'translate(0 -10)' }, svg);
+    if (k === 'cloud') return svg;
+
+    const fall = (node, i, dy, dur) => {
+      if (!anim) return;
+      node.animate([
+        { transform: 'translateY(-4px)', opacity: 0 },
+        { transform: 'translateY(0)', opacity: 1, offset: 0.2 },
+        { transform: `translateY(${dy}px)`, opacity: 0 },
+      ], { duration: dur, delay: i * (dur / 3), iterations: Infinity });
+    };
+    if (k === 'rain' || k === 'drizzle' || k === 'thunder') {
+      const xs = k === 'thunder' ? [36, 66] : [36, 51, 66];
+      xs.forEach((x, i) => {
+        const l = el('line', { x1: x, y1: 74, x2: x - 4, y2: k === 'drizzle' ? 80 : 86, stroke: RAIN_C }, svg);
+        fall(l, i, 10, 1100);
+      });
+    }
+    if (k === 'snow') {
+      [36, 51, 66].forEach((x, i) => {
+        const c = el('circle', { cx: x, cy: 80, r: 2.5, fill: 'currentColor', stroke: 'none' }, svg);
+        fall(c, i, 12, 2400);
+      });
+    }
+    if (k === 'thunder') {
+      const b = el('path', { d: 'M54 66 46 80h10l-6 12', stroke: SUN_C }, svg);
+      if (anim) b.animate([{ opacity: 0.25 }, { opacity: 0.25, offset: 0.8 }, { opacity: 1, offset: 0.83 },
+        { opacity: 0.3, offset: 0.88 }, { opacity: 1, offset: 0.92 }, { opacity: 0.25 }],
+        { duration: 4000, iterations: Infinity });
     }
     if (k === 'fog') {
-      cloud(svg, 0, -6, 1, C.cloudDark, false);
-      for (let i = 0; i < 3; i++) {
-        const l = el('line', { x1: 18 + i * 4, y1: 74 + i * 9, x2: 82 - i * 6, y2: 74 + i * 9,
-          stroke: C.cloud, 'stroke-width': 5, 'stroke-linecap': 'round', opacity: 0.8 }, svg);
-        if (animate) loop(l, [{ transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' },
-          { transform: 'translateX(-4px)' }], { duration: 4000 + i * 900 });
-      }
-      return svg;
-    }
-    const dark = k === 'cloud' ? C.cloud : C.cloudDark;
-    if (k !== 'cloud') {
-      drops(svg, k === 'drizzle' ? 3 : 4, k === 'snow' ? C.snow : C.rain,
-        k === 'drizzle' ? 7 : 12, animate, k === 'snow');
-    }
-    if (k === 'cloud') cloud(svg, 12, 8, 0.85, C.cloudDark, false);
-    cloud(svg, 0, k === 'cloud' ? 14 : -4, 1, dark, animate);
-    if (k === 'thunder') {
-      const b = el('path', { d: 'M54 62 42 82h10l-6 16 18-24H54l6-12z', fill: C.bolt }, svg);
-      if (animate) b.animate([{ opacity: 0 }, { opacity: 0, offset: 0.7 }, { opacity: 1, offset: 0.72 },
-        { opacity: 0.2, offset: 0.76 }, { opacity: 1, offset: 0.8 }, { opacity: 0 }],
-        { duration: 4200, iterations: Infinity });
+      [72, 82].forEach((y, i) => {
+        const l = el('line', { x1: 24 + i * 8, y1: y, x2: 76 - i * 4, y2: y }, svg);
+        if (anim) l.animate([{ transform: 'translateX(-3px)' }, { transform: 'translateX(3px)' },
+          { transform: 'translateX(-3px)' }], { duration: 4000 + i * 1200, iterations: Infinity });
+      });
     }
     return svg;
   }
-
-  /* ── Halloween-Bausteine ── */
-  const WING = '<path d="M63 27C72 14 92 8 117 13c-6 4-8 10-6 17-5-3-11-3-15 2-3-5-9-6-13-1-3-4-9-5-13 0-3-3-6-3-8-2z"/>';
-  const BAT = `<svg class="wx-bat" viewBox="0 0 120 64"><g fill="oklch(10% 0.02 285)">
-    <g class="wx-bat__wing">${WING}</g>
-    <g transform="matrix(-1 0 0 1 120 0)"><g class="wx-bat__wing">${WING}</g></g>
-    <ellipse cx="60" cy="33" rx="6.5" ry="11"/><circle cx="60" cy="21" r="6"/>
-    <path d="M54.5 19 55 9l4.5 7zM65.5 19 65 9l-4.5 7z"/></g>
-    <circle cx="57.6" cy="20.5" r="1.1" fill="oklch(75% 0.18 30)"/><circle cx="62.4" cy="20.5" r="1.1" fill="oklch(75% 0.18 30)"/></svg>`;
-  const SPIDER = `<div class="wx-spider" aria-hidden="true"><span class="wx-spider__thread"></span>
-    <svg viewBox="0 0 60 50"><g stroke="oklch(12% 0.02 280)" stroke-width="2.5" fill="none" stroke-linecap="round">
-    <path d="M22 22 6 10M22 26 2 24M22 30 6 40M24 33 12 48M38 22 54 10M38 26 58 24M38 30 54 40M36 33 48 48"/></g>
-    <ellipse cx="30" cy="28" rx="11" ry="13" fill="oklch(12% 0.02 280)"/><circle cx="30" cy="13" r="7" fill="oklch(12% 0.02 280)"/>
-    <circle cx="27" cy="12" r="1.6" fill="oklch(70% 0.2 25)"/><circle cx="33" cy="12" r="1.6" fill="oklch(70% 0.2 25)"/></svg></div>`;
-  const PUMPKIN = `<svg class="wx-pumpkin" viewBox="0 0 120 104" aria-hidden="true">
-    <path d="M58 18c0-8 4-14 10-16l4 4c-5 2-7 6-7 12z" fill="oklch(45% 0.09 130)"/>
-    <ellipse cx="34" cy="62" rx="28" ry="38" fill="oklch(58% 0.17 50)"/><ellipse cx="86" cy="62" rx="28" ry="38" fill="oklch(58% 0.17 50)"/>
-    <ellipse cx="60" cy="62" rx="30" ry="41" fill="oklch(66% 0.18 55)"/>
-    <g class="wx-pumpkin__face" fill="oklch(90% 0.16 90)"><path d="M34 50l12-14 10 14z"/><path d="M64 50l10-14 12 14z"/>
-    <path d="M54 62l6-9 6 9z"/><path d="M28 72c10 14 54 14 64 0l-8 3-4 7-6-6-8 7-8-7-6 6-4-7z"/></g></svg>`;
 
   /* ── Formatierung ── */
   const fmtTime = new Intl.DateTimeFormat('de-CH', { hour: '2-digit', minute: '2-digit', timeZone: TZ });
@@ -192,16 +138,12 @@
   const fmtDay  = new Intl.DateTimeFormat('de-CH', { weekday: 'short', timeZone: TZ });
   const deg = (t) => `${Math.round(t)}°`;
 
-  /* Temperatur → Farbe (kalt blau … warm orange/rot) */
-  function tColor(t) {
-    const stops = [[-10, 250], [0, 230], [8, 195], [15, 140], [22, 80], [28, 50], [35, 25]];
-    let h = stops[0][1];
-    for (let i = 1; i < stops.length; i++) {
-      const [t0, h0] = stops[i - 1], [t1, h1] = stops[i];
-      if (t <= t1) { h = h0 + (h1 - h0) * Math.max(0, (t - t0) / (t1 - t0)); break; }
-      h = h1;
-    }
-    return `oklch(76% 0.14 ${h.toFixed(0)})`;
+  function isoWeek(d) {
+    const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const day = t.getUTCDay() || 7;
+    t.setUTCDate(t.getUTCDate() + 4 - day);
+    const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    return Math.ceil(((t - y0) / 86_400_000 + 1) / 7);
   }
 
   /* ── Uhr ── */
@@ -209,38 +151,27 @@
     const now = new Date();
     $('wxClock').textContent = fmtTime.format(now);
     $('wxDate').textContent = fmtDate.format(now);
+    $('wxWeek').textContent = `KW ${isoWeek(now)}`;
   }
   $('wxCity').textContent = W.city;
   tickClock();
   setInterval(tickClock, 5000);
 
   /* ── Rendern ── */
-  function fadeIn(node, i, extra = {}) {
-    if (reduced) return;
-    node.animate([{ opacity: 0, transform: 'translateY(1.2vh)' }, { opacity: 1, transform: 'none' }],
-      { duration: 700, delay: 120 + i * 90, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'backwards', ...extra });
-  }
-
   let lastKey = '';
   function render(d, animateIn) {
     const cur = d.current;
-    const iconBox = $('wxIcon');
     const key = `${cur.weather_code}-${cur.is_day}`;
-    if (key !== lastKey) {                   /* Icon nur neu bauen, wenn sich das Wetter ändert */
-      iconBox.replaceChildren(icon(cur.weather_code, cur.is_day, true));
+    if (key !== lastKey) {
+      $('wxIcon').replaceChildren(icon(cur.weather_code, cur.is_day, true));
       lastKey = key;
     }
     $('wxTemp').textContent = deg(cur.temperature_2m);
     $('wxDesc').textContent = TEXT[cur.weather_code] || '';
-    const today = 0;
     $('wxFacts').innerHTML =
-      `Gefühlt <b>${deg(cur.apparent_temperature)}</b> · Wind <b>${Math.round(cur.wind_speed_10m)} km/h</b>`
-      + ` · Feuchte <b>${cur.relative_humidity_2m}%</b>`;
-    $('wxSun').innerHTML = `Sonne <b>${d.daily.sunrise[today].slice(11)}</b> – <b>${d.daily.sunset[today].slice(11)}</b>`;
-
-    renderDays(d, animateIn);    /* zuerst: bestimmt die Höhe der Zeile */
+      `Gefühlt <b>${deg(cur.apparent_temperature)}</b> · Wind <b>${Math.round(cur.wind_speed_10m)} km/h</b>`;
+    renderDays(d, animateIn);
     renderHours(d, animateIn);
-    $('wxStamp').textContent = `Open-Meteo · ${fmtTime.format(new Date())}`;
   }
 
   /* Nächste 24 h: glatte Kurve (Catmull-Rom → Bézier) + Regenbalken */
@@ -251,16 +182,18 @@
     const nowIso = d.current.time.slice(0, 13);
     let start = d.hourly.time.findIndex((t) => t.slice(0, 13) === nowIso);
     if (start < 0) start = 0;
-    const N = 24;
-    const T = d.hourly.temperature_2m.slice(start, start + N + 1);
-    const P = d.hourly.precipitation_probability.slice(start, start + N + 1);
-    const H = d.hourly.time.slice(start, start + N + 1);
+    const T = d.hourly.temperature_2m.slice(start, start + 25);
+    const P = d.hourly.precipitation_probability.slice(start, start + 25);
+    const H = d.hourly.time.slice(start, start + 25);
     if (T.length < 2) return;
 
-    const padX = w * 0.035, top = h * 0.2, bottom = h * 0.56, rainTop = h * 0.64, rainH = h * 0.18;
-    const lo = Math.min(...T) - 1, hi = Math.max(...T) + 1;
+    const fs = parseFloat(getComputedStyle(box).fontSize) || 14;
+    const padX = fs * 1.2, top = fs * 1.9, bottom = h * 0.58, rainTop = h * 0.66, rainH = h * 0.16;
+    const lo = Math.min(...T), hi = Math.max(...T);
+    const span = Math.max(hi - lo, 4);
+    const mid = (hi + lo) / 2;
     const X = (i) => padX + (i * (w - 2 * padX)) / (T.length - 1);
-    const Y = (t) => bottom - ((t - lo) / (hi - lo)) * (bottom - top);
+    const Y = (t) => bottom - ((t - (mid - span / 2)) / span) * (bottom - top);
     const pts = T.map((t, i) => [X(i), Y(t)]);
 
     let path = `M${pts[0][0]} ${pts[0][1]}`;
@@ -272,42 +205,33 @@
 
     const svg = el('svg', { viewBox: `0 0 ${w} ${h}`, width: w, height: h, class: 'wx-chart' });
     const defs = el('defs', {}, svg);
-    const gl = el('linearGradient', { id: 'wxLine', x1: 0, x2: 1, y1: 0, y2: 0 }, defs);
-    T.forEach((t, i) => el('stop', { offset: i / (T.length - 1), 'stop-color': tColor(t) }, gl));
     const ga = el('linearGradient', { id: 'wxArea', x1: 0, x2: 0, y1: 0, y2: 1 }, defs);
-    el('stop', { offset: 0, 'stop-color': 'oklch(80% 0.1 220)', 'stop-opacity': 0.28 }, ga);
-    el('stop', { offset: 1, 'stop-color': 'oklch(80% 0.1 220)', 'stop-opacity': 0 }, ga);
+    el('stop', { offset: 0, 'stop-color': 'var(--wx-line)', 'stop-opacity': 0.22 }, ga);
+    el('stop', { offset: 1, 'stop-color': 'var(--wx-line)', 'stop-opacity': 0 }, ga);
 
-    /* Regenbalken ganz unten */
-    const bw = ((w - 2 * padX) / (T.length - 1)) * 0.38;
-    const rain = el('g', { fill: 'oklch(72% 0.13 235)' }, svg);
+    const bw = ((w - 2 * padX) / (T.length - 1)) * 0.4;
+    const rain = el('g', { fill: 'var(--wx-rain)' }, svg);
     P.forEach((p, i) => {
-      if (!p) return;
-      const bh = Math.max((p / 100) * rainH, 2);
-      el('rect', { x: X(i) - bw / 2, y: rainTop + rainH - bh, width: bw, height: bh,
-        rx: Math.min(bw / 2, 3), opacity: 0.3 + (p / 100) * 0.6 }, rain);
+      const bh = Math.max((p / 100) * rainH, 1.5);
+      el('rect', { x: X(i) - bw / 2, y: rainTop + rainH - bh, width: bw, height: bh, rx: 1.5,
+        opacity: p ? 0.35 + (p / 100) * 0.55 : 0.15 }, rain);
     });
 
-    const area = el('path', { d: `${path} L${X(T.length - 1)} ${rainTop - h * 0.02} L${X(0)} ${rainTop - h * 0.02} Z`,
+    const area = el('path', { d: `${path} L${X(T.length - 1)} ${rainTop - fs * 0.4} L${X(0)} ${rainTop - fs * 0.4} Z`,
       fill: 'url(#wxArea)' }, svg);
-    const line = el('path', { d: path, fill: 'none', stroke: 'url(#wxLine)', 'stroke-width': h * 0.035,
+    const line = el('path', { d: path, fill: 'none', stroke: 'var(--wx-line)', 'stroke-width': fs * 0.2,
       'stroke-linecap': 'round' }, svg);
 
-    /* Beschriftung alle 3 h */
-    const labels = el('g', { class: 'wx-chart__labels' }, svg);
-    for (let i = 0; i < T.length; i += 3) {
-      el('circle', { cx: X(i), cy: Y(T[i]), r: h * 0.025, fill: tColor(T[i]) }, labels);
-      const tt = el('text', { x: X(i), y: Y(T[i]) - h * 0.08, 'text-anchor': 'middle', class: 'wx-chart__t' }, labels);
+    const labels = el('g', {}, svg);
+    const step = w < 520 ? 6 : 3;            /* schmale Kachel → weniger Beschriftung */
+    for (let i = 0; i < T.length; i += step) {
+      el('circle', { cx: X(i), cy: Y(T[i]), r: fs * 0.22, fill: i === 0 ? 'var(--wx-line)' : 'var(--color-card)',
+        stroke: 'var(--wx-line)', 'stroke-width': fs * 0.14 }, labels);
+      const tt = el('text', { x: X(i), y: Y(T[i]) - fs * 0.7, 'text-anchor': 'middle', class: 'wx-chart__t' }, labels);
       tt.textContent = deg(T[i]);
-      const hh = el('text', { x: X(i), y: h - h * 0.01, 'text-anchor': i === 0 ? 'start' : 'middle',
-        class: 'wx-chart__h' }, labels);
-      if (i === 0) hh.setAttribute('x', X(0) - padX * 0.6);
-      hh.textContent = i === 0 ? 'Jetzt' : H[i].slice(11, 13);
+      const hh = el('text', { x: X(i), y: h - fs * 0.1, 'text-anchor': 'middle', class: 'wx-chart__h' }, labels);
+      hh.textContent = i === 0 ? 'Jetzt' : `${H[i].slice(11, 13)} h`;
     }
-    /* Jetzt-Punkt pulsiert */
-    const pulse = el('circle', { cx: X(0), cy: Y(T[0]), r: h * 0.05, fill: tColor(T[0]), opacity: 0.4 }, svg);
-    loop(pulse, [{ transform: 'scale(0.6)', opacity: 0.6 }, { transform: 'scale(1.6)', opacity: 0 }],
-      { duration: 2400, easing: 'ease-out' });
 
     box.replaceChildren(svg);
 
@@ -315,53 +239,39 @@
       const len = line.getTotalLength();
       line.style.strokeDasharray = len;
       line.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
-        { duration: 1800, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'backwards', delay: 300 });
-      area.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1200, delay: 900, fill: 'backwards' });
-      labels.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 900, delay: 1400, fill: 'backwards' });
-      rain.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }],
-        { duration: 900, delay: 1100, fill: 'backwards' });
+        { duration: 1600, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'backwards', delay: 200 });
+      area.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 900, delay: 900, fill: 'backwards' });
+      labels.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 700, delay: 1100, fill: 'backwards' });
+      rain.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 700, delay: 800, fill: 'backwards' });
     }
   }
 
-  /* 7 Tage: senkrechte Min/Max-Balken auf gemeinsamer Wochenskala */
+  /* Nächste 5 Tage (ab morgen): Tag · Icon · Max/Min · Regen ab 30 % */
   function renderDays(d, animateIn) {
     const box = $('wxDays');
     const dl = d.daily;
-    const lo = Math.min(...dl.temperature_2m_min), hi = Math.max(...dl.temperature_2m_max);
-    const span = Math.max(hi - lo, 1);
-    box.querySelectorAll('.wx__day').forEach((n) => n.remove());
-    dl.time.forEach((day, i) => {
+    box.replaceChildren();
+    for (let i = 1; i <= 5 && i < dl.time.length; i++) {
       const col = document.createElement('div');
-      col.className = 'wx__day' + (i === 0 ? ' is-today' : '');
-      const name = i === 0 ? 'Heute' : fmtDay.format(new Date(`${day}T12:00:00`)).replace('.', '');
-      const mx = dl.temperature_2m_max[i], mn = dl.temperature_2m_min[i];
-      const topPct = ((hi - mx) / span) * 100, botPct = ((mn - lo) / span) * 100;
-      const rain = dl.precipitation_probability_max[i];
-      col.innerHTML = `
-        <p class="wx__dname">${name}</p>
-        <div class="wx__dicon"></div>
-        <p class="wx__dmax">${deg(mx)}</p>
-        <div class="wx__drange"><span class="wx__dbar" style="top:${topPct}%;bottom:${botPct}%;
-          background:linear-gradient(to top, ${tColor(mn)}, ${tColor(mx)})"></span></div>
-        <p class="wx__dmin">${deg(mn)}</p>
-        <p class="wx__drain${rain >= 50 ? ' is-wet' : ''}">
-          <svg viewBox="0 0 10 14" aria-hidden="true"><path d="M5 0C3 4 0 6.5 0 9a5 5 0 0 0 10 0C10 6.5 7 4 5 0z"/></svg>${rain ?? 0}%</p>`;
-      col.querySelector('.wx__dicon').appendChild(icon(dl.weather_code[i], 1, false));
+      col.className = 'wx-day';
+      const name = fmtDay.format(new Date(`${dl.time[i]}T12:00:00`)).replace('.', '');
+      const rain = dl.precipitation_probability_max[i] ?? 0;
+      col.innerHTML = `<p class="wx-day__name">${name}</p><div class="wx-day__icon"></div>
+        <p class="wx-day__temp"><b>${deg(dl.temperature_2m_max[i])}</b> ${deg(dl.temperature_2m_min[i])}</p>
+        <p class="wx-day__rain">${rain >= 30 ? `${rain} %` : '&nbsp;'}</p>`;
+      col.querySelector('.wx-day__icon').appendChild(icon(dl.weather_code[i], 1, false));
       box.appendChild(col);
-      if (animateIn) {
-        fadeIn(col, i);
-        if (!reduced) col.querySelector('.wx__dbar').animate(
-          [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }],
-          { duration: 900, delay: 500 + i * 90, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'backwards' });
-      }
-    });
+      if (animateIn && !reduced) col.animate(
+        [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }],
+        { duration: 600, delay: 300 + i * 80, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'backwards' });
+    }
   }
 
   /* ── Laden ── */
   let data = null;
   try { data = JSON.parse(localStorage.getItem(CACHE_KEY)); } catch (_) {}
   let first = true;
-  if (data) { render(data, true); first = false; }
+  if (data && data.current) { render(data, true); first = false; }
 
   async function load() {
     try {
@@ -379,57 +289,69 @@
   }
   load();
   setInterval(load, (W.refreshMinutes || 15) * 60_000);
-  window.addEventListener('resize', () => { if (data) renderHours(data, false); });
+  /* Kurve neu zeichnen, sobald die Kachel ihre endgültige Grösse hat */
+  let lastSize = '';
+  new ResizeObserver(() => {
+    const b = $('wxHours');
+    const size = `${b.clientWidth}x${b.clientHeight}`;
+    if (data && size !== lastSize) { lastSize = size; renderHours(data, false); }
+  }).observe($('wxHours'));
 
-  /* Einblenden des Kopfbereichs */
-  document.querySelectorAll('.wx-tile').forEach((n, i) => fadeIn(n, i));
 
-  /* ── Halloween (weather.halloween: 'auto' | true | false) ── */
-  const today = new Date();
-  const hwOn = W.halloween === true
-    || (W.halloween === 'auto' && today.getMonth() === 9);   /* Oktober */
-  if (hwOn) halloween();
+  /* ── Halloween in den Seitenrändern (weather.halloween: 'auto' | true | false) ── */
+  const hwOn = W.halloween === true || (W.halloween === 'auto' && new Date().getMonth() === 9);
+  if (hwOn) {
+    const WEB = (side) => `<svg class="hw__web %s" viewBox="0 0 100 100"> <g fill="none" stroke="oklch(94% 0.01 280 / 0.6)" stroke-linecap="round" vector-effect="non-scaling-stroke"> <path d="M0 16Q34 38 84 100" stroke-width="1.1"/> <path d="M0 100L14.2 26.4 M0 100L29.8 40.0 M0 100L46.6 56.8 M0 100L64.6 76.8" stroke-width="0.8"/> <path d="M0.0 81.5Q1.4 84.7 3.1 83.8Q4.3 87.1 6.5 86.8Q7.4 90.0 10.2 90.5Q10.8 93.6 14.2 94.9Q14.4 97.8 18.5 100.0 M0.0 66.4Q2.5 72.3 5.7 70.6Q7.7 76.5 11.9 76.0Q13.4 81.8 18.6 82.7Q19.6 88.3 25.9 90.7Q26.2 95.9 33.6 100.0 M0.0 51.3Q3.6 59.8 8.3 57.3Q11.2 65.9 17.3 65.2Q19.5 73.7 27.0 74.9Q28.4 83.1 37.5 86.5Q37.9 94.1 48.7 100.0 M0.0 36.2Q4.8 47.3 10.8 44.1Q14.7 55.3 22.6 54.4Q25.5 65.5 35.4 67.2Q37.2 77.8 49.1 82.4Q49.7 92.2 63.8 100.0 M0.0 22.7Q5.8 36.2 13.1 32.3Q17.8 45.9 27.4 44.8Q30.9 58.2 42.8 60.3Q45.0 73.1 59.5 78.7Q60.2 90.6 77.3 100.0" stroke-width="0.6"/> </g> </svg>`.replace('%s', `hw__web--${side}`);
+    const WING = '<path d="M63 27C72 14 92 8 117 13c-6 4-8 10-6 17-5-3-11-3-15 2-3-5-9-6-13-1-3-4-9-5-13 0-3-3-6-3-8-2z"/>';
+    const BAT = `<svg class="hw__bat" viewBox="0 0 120 64"><g fill="oklch(12% 0.02 285)">
+      <g class="hw__wing">${WING}</g><g transform="matrix(-1 0 0 1 120 0)"><g class="hw__wing">${WING}</g></g>
+      <ellipse cx="60" cy="33" rx="6.5" ry="11"/><circle cx="60" cy="21" r="6"/>
+      <path d="M54.5 19 55 9l4.5 7zM65.5 19 65 9l-4.5 7z"/></g>
+      <circle cx="57.6" cy="20.5" r="1.1" fill="oklch(75% 0.18 30)"/><circle cx="62.4" cy="20.5" r="1.1" fill="oklch(75% 0.18 30)"/></svg>`;
+    const SPIDER = (cls, len) => `<div class="hw__spider ${cls}"><span class="hw__thread" style="height:${len}"></span>
+      <svg viewBox="0 0 60 50"><g stroke="oklch(14% 0.02 280)" stroke-width="2.5" fill="none" stroke-linecap="round">
+      <path d="M22 22 6 10M22 26 2 24M22 30 6 40M24 33 12 48M38 22 54 10M38 26 58 24M38 30 54 40M36 33 48 48"/></g>
+      <ellipse cx="30" cy="28" rx="11" ry="13" fill="oklch(14% 0.02 280)"/><circle cx="30" cy="13" r="7" fill="oklch(14% 0.02 280)"/>
+      <circle cx="27" cy="12" r="1.6" fill="oklch(70% 0.2 25)"/><circle cx="33" cy="12" r="1.6" fill="oklch(70% 0.2 25)"/></svg></div>`;
+    const PUMPKIN = (cls) => `<svg class="hw__pumpkin ${cls}" viewBox="0 0 120 104">
+      <path d="M58 18c0-8 4-14 10-16l4 4c-5 2-7 6-7 12z" fill="oklch(45% 0.09 130)"/>
+      <ellipse cx="34" cy="62" rx="28" ry="38" fill="oklch(58% 0.17 50)"/><ellipse cx="86" cy="62" rx="28" ry="38" fill="oklch(58% 0.17 50)"/>
+      <ellipse cx="60" cy="62" rx="30" ry="41" fill="oklch(66% 0.18 55)"/>
+      <g class="hw__face" fill="oklch(90% 0.16 90)"><path d="M34 50l12-14 10 14z"/><path d="M64 50l10-14 12 14z"/>
+      <path d="M54 62l6-9 6 9z"/><path d="M28 72c10 14 54 14 64 0l-8 3-4 7-6-6-8 7-8-7-6 6-4-7z"/></g></svg>`;
 
-  function halloween() {
-    document.documentElement.dataset.halloween = 'on';
-    /* Countdown in der Fusszeile */
-    const hw = $('wxHalloween');
-    const target = new Date(today.getFullYear(), 9, 31);
-    const days = Math.round((target - new Date(today.getFullYear(), today.getMonth(), today.getDate())) / 86_400_000);
-    hw.innerHTML = PUMPKIN + '<span>' + (days > 1 ? `Noch <b>${days} Tage</b> bis Halloween`
-      : days === 1 ? 'Morgen ist <b>Halloween</b>' : '<b>Happy Halloween!</b>') + '</span>';
-    hw.hidden = false;
+    const hw = document.createElement('div');
+    hw.className = 'hw';
+    hw.setAttribute('aria-hidden', 'true');
+    hw.innerHTML = WEB('l') + WEB('r') + SPIDER('', '24vh') + SPIDER('hw__spider--r', '52vh')
+      + PUMPKIN('hw__pumpkin--l') + PUMPKIN('hw__pumpkin--r') + BAT + BAT;
+    document.body.appendChild(hw);
 
-    /* Fledermäuse über dem Himmel */
-    const sky = document.createElement('div');
-    sky.className = 'wx-bats';
-    sky.setAttribute('aria-hidden', 'true');
-    for (let i = 0; i < 3; i++) sky.insertAdjacentHTML('beforeend', BAT);
-    document.body.appendChild(sky);
-    sky.querySelectorAll('.wx-bat').forEach((b, i) => {
-      if (reduced) return;
-      b.animate([
-        { transform: 'translate(-15vw, 0)' }, { transform: 'translate(35vw, -2vh)' },
-        { transform: 'translate(70vw, 3vh)' }, { transform: 'translate(115vw, -1vh)' },
-      ], { duration: 22000 + i * 7000, delay: -i * 9000, iterations: Infinity });
-      b.querySelectorAll('.wx-bat__wing').forEach((w) => w.animate([
-        { transform: 'rotate(18deg) scaleY(0.9)' }, { transform: 'rotate(-28deg)' },
-        { transform: 'rotate(18deg) scaleY(0.9)' },
-      ], { duration: 420 + i * 90, iterations: Infinity, easing: 'ease-in-out' }));
-    });
-
-    /* Spinne hängt an der Uhr-Kachel */
-    const tile = $('wxDays');   /* Container bleibt bestehen; Spinne hängt unter der letzten Tageskachel */
-    tile.insertAdjacentHTML('beforeend', SPIDER);
-    const sp = tile.querySelector('.wx-spider');
-    if (!reduced) sp.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(3.5vh)' },
-      { transform: 'translateY(3vh)' }, { transform: 'translateY(0)' }],
-      { duration: 9000, iterations: Infinity, easing: 'ease-in-out' });
-
-    /* Kürbis-Gesicht glimmt */
-    hw.querySelectorAll('.wx-pumpkin__face').forEach((f) => {
-      if (!reduced) f.animate([{ opacity: 1 }, { opacity: 0.65 }, { opacity: 0.95 }, { opacity: 0.75 }, { opacity: 1 }],
-        { duration: 2400, iterations: Infinity });
-    });
+    if (!reduced) {
+      hw.querySelectorAll('.hw__spider').forEach((sp, i) => sp.animate(
+        [{ transform: 'translateY(0)' }, { transform: `translateY(${i ? 4 : 6}vh)` },
+         { transform: `translateY(${i ? 3.5 : 5}vh)` }, { transform: 'translateY(0)' }],
+        { duration: 10000 + i * 3000, delay: -i * 4000, iterations: Infinity, easing: 'ease-in-out' }));
+      hw.querySelectorAll('.hw__face').forEach((f, i) => f.animate(
+        [{ opacity: 1 }, { opacity: 0.65 }, { opacity: 0.95 }, { opacity: 0.75 }, { opacity: 1 }],
+        { duration: 2300 + i * 600, iterations: Infinity }));
+      /* Fledermäuse: alle ~40 s ein Überflug, sonst ausserhalb des Bildes */
+      hw.querySelectorAll('.hw__bat').forEach((b, i) => {
+        b.style.top = i ? '45vh' : '12vh';
+        b.animate([
+          { transform: 'translate(-10vw, 0)' }, { transform: 'translate(40vw, -3vh)', offset: 0.12 },
+          { transform: 'translate(75vw, 2vh)', offset: 0.22 }, { transform: 'translate(115vw, -2vh)', offset: 0.3 },
+          { transform: 'translate(115vw, -2vh)' },
+        ], { duration: 40000, delay: i * 17000, iterations: Infinity, easing: 'linear' });
+        b.querySelectorAll('.hw__wing').forEach((w) => w.animate(
+          [{ transform: 'rotate(18deg) scaleY(0.9)' }, { transform: 'rotate(-28deg)' }, { transform: 'rotate(18deg) scaleY(0.9)' }],
+          { duration: 420 + i * 80, iterations: Infinity, easing: 'ease-in-out' }));
+      });
+    }
   }
+
+  /* Kacheln blenden beim Start nacheinander ein */
+  if (!reduced) document.querySelectorAll('.bento .tile').forEach((t, i) =>
+    t.animate([{ opacity: 0, transform: 'translateY(1vh)' }, { opacity: 1, transform: 'none' }],
+      { duration: 700, delay: i * 110, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'backwards' }));
 })();

@@ -129,7 +129,6 @@ if (G.show) {
 if (!G.show && cfg.weather && cfg.weather.show) {
   document.documentElement.dataset.mode = 'weather';
   $('wx').hidden = false;
-  $('wxFoot').hidden = false;
 }
 
 /* ════════════════════════════════════════════════════════════════

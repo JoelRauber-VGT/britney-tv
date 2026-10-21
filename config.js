@@ -37,8 +37,16 @@ const CONFIG = {
     lat:            47.3925,
     lon:            8.0444,
     refreshMinutes: 15,
-    /* Halloween-Deko: 'auto' = nur im Oktober (bis und mit 31.), true = immer, false = nie */
+    /* Halloween-Deko in den Seitenrändern: 'auto' = nur im Oktober, true = immer, false = nie */
     halloween:      'auto',
+  },
+
+  /* Strompreis-Kachel (nur im Wetter-Modus). Day-Ahead-Börsenpreis der
+   * Gebotszone via energy-charts.info, abgeholt über serve.py (/api/price). */
+  price: {
+    show:           true,
+    zone:           'CH',
+    refreshMinutes: 30,
   },
 
   /* Grabstein-Modus: Projekt wurde von Innosuisse abgelehnt.
